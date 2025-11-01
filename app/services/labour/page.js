@@ -17,15 +17,30 @@ import {
   Award,
   CheckCircle,
   X,
-  ArrowRight
+  ArrowRight,
+  Filter
 } from 'lucide-react';
 
 export default function LabourPage() {
   const router = useRouter();
   const [labours, setLabours] = useState([]);
+  const [filteredLabours, setFilteredLabours] = useState([]);
   const [selectedLabour, setSelectedLabour] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeFilter, setActiveFilter] = useState('all');
+
+  // Filter types with all worker categories
+  const filterTypes = [
+    { key: 'all', label: 'All Workers' },
+    { key: 'masonry', label: 'Masonry' },
+    { key: 'carpentry', label: 'Carpentry' },
+    { key: 'plumbing', label: 'Plumbing' },
+    { key: 'electrical', label: 'Electrical' },
+    { key: 'painting', label: 'Painting' },
+    { key: 'welding', label: 'Welding' },
+    { key: 'carpenter', label: 'Carpenter' }
+  ];
 
   useEffect(() => {
     fetchLabours();
@@ -41,6 +56,7 @@ export default function LabourPage() {
 
       if (error) throw error;
       setLabours(data || []);
+      setFilteredLabours(data || []);
     } catch (err) {
       setError(err.message);
       console.error('Error fetching labours:', err);
@@ -48,6 +64,43 @@ export default function LabourPage() {
       setLoading(false);
     }
   };
+
+  // ✅ Apply filters when activeFilter changes
+  useEffect(() => {
+    const filterWorkers = () => {
+      if (activeFilter === 'all') {
+        setFilteredLabours(labours);
+      } else {
+        const filtered = labours.filter(worker => {
+          if (!worker.expertise) return false;
+          
+          const expertise = worker.expertise.toLowerCase();
+          
+          switch (activeFilter) {
+            case 'masonry':
+              return expertise.includes('masonry') || expertise.includes('mason');
+            case 'carpentry':
+              return expertise.includes('carpentry');
+            case 'plumbing':
+              return expertise.includes('plumbing') || expertise.includes('plumber');
+            case 'electrical':
+              return expertise.includes('electrical') || expertise.includes('electrician');
+            case 'painting':
+              return expertise.includes('painting') || expertise.includes('painter');
+            case 'welding':
+              return expertise.includes('welding') || expertise.includes('welder');
+            case 'carpenter':
+              return expertise.includes('carpenter') || expertise.includes('carpentry');
+            default:
+              return true;
+          }
+        });
+        setFilteredLabours(filtered);
+      }
+    };
+
+    filterWorkers();
+  }, [activeFilter, labours]);
 
   if (loading) {
     return (
@@ -80,7 +133,7 @@ export default function LabourPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50">
+   <div className="min-h-screen bg-white">
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -109,27 +162,81 @@ export default function LabourPage() {
             <div className="hidden md:block">
               <div className="flex items-center space-x-2 text-sm text-gray-500 bg-amber-50 px-4 py-2 rounded-full">
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>{labours.length} workers available</span>
+                <span>{filteredLabours.length} workers available</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Worker List */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Available Workers
-          </h2>
-          <p className="text-gray-600">
-            Click on a worker to view detailed profile and contact information
-          </p>
+      {/* Mobile counter for small screens */}
+      <div className="md:hidden bg-amber-50 border-b border-amber-100">
+        <div className="max-w-7xl mx-auto px-4 py-2">
+          <div className="flex items-center justify-center space-x-2 text-xs text-gray-600">
+            <CheckCircle className="w-3 h-3 text-green-500" />
+            <span>{filteredLabours.length} workers available</span>
+          </div>
         </div>
+      </div>
 
-        {labours.length > 0 ? (
+      {/* Filter Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Available Workers
+              </h2>
+              <p className="text-gray-600">
+                Click on a worker to view detailed profile and contact information
+              </p>
+            </div>
+            <div className="flex items-center space-x-2 text-gray-500">
+              <Filter className="w-5 h-5" />
+              <span className="text-sm font-medium">Filter:</span>
+            </div>
+          </div>
+
+          {/* Filter Buttons - Scrollable on mobile */}
+          <div className="relative">
+            <div className="flex space-x-2 sm:space-x-3 overflow-x-auto pb-3 -mx-2 px-2 scrollbar-hide">
+              {filterTypes.map((filter) => (
+                <button
+                  key={filter.key}
+                  onClick={() => setActiveFilter(filter.key)}
+                  className={`flex-shrink-0 px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 border whitespace-nowrap ${
+                    activeFilter === filter.key
+                      ? 'bg-amber-600 text-white border-amber-600 shadow-md shadow-amber-100 transform scale-105'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+                  }`}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Active Filter Count */}
+          <div className="mt-3 flex items-center space-x-2 text-sm text-gray-500">
+            <span>Showing</span>
+            <span className="font-semibold text-amber-600">{filteredLabours.length}</span>
+            <span>of</span>
+            <span className="font-semibold text-gray-700">{labours.length}</span>
+            <span>workers</span>
+            {activeFilter !== 'all' && (
+              <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full text-xs">
+                {filterTypes.find(f => f.key === activeFilter)?.label}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Worker List */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+        {filteredLabours.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {labours.map((worker) => (
+            {filteredLabours.map((worker) => (
               <div
                 key={worker.id}
                 onClick={() => setSelectedLabour(worker)}
@@ -183,12 +290,22 @@ export default function LabourPage() {
               <UserCheck className="w-12 h-12 text-gray-400" />
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              No Workers Available
+              No Workers Found
             </h3>
-            <p className="text-gray-600 max-w-md mx-auto">
-              There are currently no labor workers available in your area. 
-              Please check back later.
+            <p className="text-gray-600 max-w-md mx-auto mb-4">
+              {activeFilter === 'all' 
+                ? 'There are currently no labor workers available in your area.' 
+                : `No ${filterTypes.find(f => f.key === activeFilter)?.label.toLowerCase()} workers found.`
+              }
             </p>
+            {activeFilter !== 'all' && (
+              <button
+                onClick={() => setActiveFilter('all')}
+                className="px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+              >
+                Show All Workers
+              </button>
+            )}
           </div>
         )}
       </div>
