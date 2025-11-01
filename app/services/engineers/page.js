@@ -15,16 +15,31 @@ import {
   CheckCircle,
   X,
   ArrowRight,
-  Shield
+  Shield,
+  Filter
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function EngineersPage() {
   const router = useRouter();
   const [engineers, setEngineers] = useState([]);
+  const [filteredEngineers, setFilteredEngineers] = useState([]);
   const [selectedEngineer, setSelectedEngineer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeFilter, setActiveFilter] = useState('all');
+
+  // Filter types with all engineering categories
+  const filterTypes = [
+    { key: 'all', label: 'All Engineers' },
+    { key: 'site', label: 'Site Engineer' },
+    { key: 'structural', label: 'Structural Engineer' },
+    { key: 'project', label: 'Project Engineer' },
+    { key: 'assistant', label: 'Assistant Engineer' },
+    { key: 'electrical', label: 'Electrical Engineer' },
+    { key: 'chief', label: 'Chief Engineer' },
+    { key: 'civil', label: 'Civil Engineer' }
+  ];
 
   // ✅ Fetch Engineers from Supabase
   useEffect(() => {
@@ -38,6 +53,7 @@ export default function EngineersPage() {
 
         if (error) throw error;
         setEngineers(data || []);
+        setFilteredEngineers(data || []);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -47,6 +63,43 @@ export default function EngineersPage() {
 
     fetchEngineers();
   }, []);
+
+  // ✅ Apply filters when activeFilter changes
+  useEffect(() => {
+    const filterEngineers = () => {
+      if (activeFilter === 'all') {
+        setFilteredEngineers(engineers);
+      } else {
+        const filtered = engineers.filter(eng => {
+          if (!eng.Specialization) return false;
+          
+          const specialization = eng.Specialization.toLowerCase();
+          
+          switch (activeFilter) {
+            case 'site':
+              return specialization.includes('site');
+            case 'structural':
+              return specialization.includes('structural');
+            case 'project':
+              return specialization.includes('project');
+            case 'assistant':
+              return specialization.includes('assistant');
+            case 'electrical':
+              return specialization.includes('electrical');
+            case 'chief':
+              return specialization.includes('chief');
+            case 'civil':
+              return specialization.includes('civil');
+            default:
+              return true;
+          }
+        });
+        setFilteredEngineers(filtered);
+      }
+    };
+
+    filterEngineers();
+  }, [activeFilter, engineers]);
 
   const handleCall = (phone) => {
     if (!phone) {
@@ -116,7 +169,7 @@ export default function EngineersPage() {
             <div className="hidden sm:block">
               <div className="flex items-center space-x-2 text-xs sm:text-sm text-gray-500 bg-indigo-50 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full">
                 <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500" />
-                <span>{engineers.length} available</span>
+                <span>{filteredEngineers.length} available</span>
               </div>
             </div>
           </div>
@@ -128,25 +181,69 @@ export default function EngineersPage() {
         <div className="max-w-7xl mx-auto px-4 py-2">
           <div className="flex items-center justify-center space-x-2 text-xs text-gray-600">
             <CheckCircle className="w-3 h-3 text-green-500" />
-            <span>{engineers.length} engineers available</span>
+            <span>{filteredEngineers.length} engineers available</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Filter Section */}
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 pt-4 sm:pt-6">
+        <div className="mb-4 sm:mb-6 px-2 sm:px-0">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div>
+              <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">
+                Available Engineers
+              </h2>
+              <p className="text-gray-600 text-xs sm:text-sm">
+                Tap on an engineer to view details and contact
+              </p>
+            </div>
+            <div className="flex items-center space-x-2 text-gray-500">
+              <Filter className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="text-xs sm:text-sm font-medium">Filter:</span>
+            </div>
+          </div>
+
+          {/* Filter Buttons - Scrollable on mobile */}
+          <div className="relative">
+            <div className="flex space-x-2 sm:space-x-3 overflow-x-auto pb-3 -mx-2 px-2 scrollbar-hide">
+              {filterTypes.map((filter) => (
+                <button
+                  key={filter.key}
+                  onClick={() => setActiveFilter(filter.key)}
+                  className={`flex-shrink-0 px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 border whitespace-nowrap ${
+                    activeFilter === filter.key
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-100 transform scale-105'
+                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+                  }`}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Active Filter Count */}
+          <div className="mt-3 flex items-center space-x-2 text-xs sm:text-sm text-gray-500">
+            <span>Showing</span>
+            <span className="font-semibold text-indigo-600">{filteredEngineers.length}</span>
+            <span>of</span>
+            <span className="font-semibold text-gray-700">{engineers.length}</span>
+            <span>engineers</span>
+            {activeFilter !== 'all' && (
+              <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-xs">
+                {filterTypes.find(f => f.key === activeFilter)?.label}
+              </span>
+            )}
           </div>
         </div>
       </div>
 
       {/* Engineer List - Minimal View */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
-        <div className="mb-4 sm:mb-6 lg:mb-8 px-2 sm:px-0">
-          <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">
-            Available Engineers
-          </h2>
-          <p className="text-gray-600 text-xs sm:text-sm">
-            Tap on an engineer to view details and contact
-          </p>
-        </div>
-
-        {engineers.length > 0 ? (
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 pb-4 sm:pb-6 lg:pb-8">
+        {filteredEngineers.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
-            {engineers.map((eng) => (
+            {filteredEngineers.map((eng) => (
               <div
                 key={eng.id}
                 onClick={() => setSelectedEngineer(eng)}
@@ -201,12 +298,22 @@ export default function EngineersPage() {
               <Briefcase className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-gray-400" />
             </div>
             <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
-              No Engineers Available
+              No Engineers Found
             </h3>
-            <p className="text-gray-600 text-sm sm:text-base max-w-md mx-auto">
-              There are currently no engineers available in your area. 
-              Please check back later.
+            <p className="text-gray-600 text-sm sm:text-base max-w-md mx-auto mb-4">
+              {activeFilter === 'all' 
+                ? 'There are currently no engineers available.' 
+                : `No ${filterTypes.find(f => f.key === activeFilter)?.label.toLowerCase()} found.`
+              }
             </p>
+            {activeFilter !== 'all' && (
+              <button
+                onClick={() => setActiveFilter('all')}
+                className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm sm:text-base"
+              >
+                Show All Engineers
+              </button>
+            )}
           </div>
         )}
       </div>
