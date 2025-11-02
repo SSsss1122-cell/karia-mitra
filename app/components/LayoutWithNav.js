@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Search, Building2, Home, Settings, User, X } from 'lucide-react';
+import { Search, Building2, Home, Settings, User, Handshake } from 'lucide-react'; // ✅ added Handshake icon
 import { supabase } from '../lib/supabase';
 
 export default function LayoutWithNav({ children }) {
@@ -16,7 +16,6 @@ export default function LayoutWithNav({ children }) {
   const [user, setUser] = useState(null);
   const menuRef = useRef(null);
 
-  // Fetch current session (check if user already logged in)
   useEffect(() => {
     const getUser = async () => {
       const { data } = await supabase.auth.getUser();
@@ -24,7 +23,6 @@ export default function LayoutWithNav({ children }) {
     };
     getUser();
 
-    // Realtime auth listener
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
     });
@@ -34,7 +32,6 @@ export default function LayoutWithNav({ children }) {
     };
   }, []);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
@@ -49,7 +46,6 @@ export default function LayoutWithNav({ children }) {
     router.push('/search');
   };
 
-  // Email Login / Signup
   const handleAuth = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -70,7 +66,6 @@ export default function LayoutWithNav({ children }) {
     }
   };
 
-  // Google login
   const handleGoogleLogin = async () => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
@@ -88,7 +83,6 @@ export default function LayoutWithNav({ children }) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f8fafc] via-[#f1f5f9] to-[#e2e8f0]">
-      {/* Background Blobs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-r from-[#1e3a8a] to-[#3730a3] rounded-full blur-3xl opacity-20"></div>
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-r from-[#1e40af] to-[#1d4ed8] rounded-full blur-3xl opacity-20"></div>
@@ -117,7 +111,6 @@ export default function LayoutWithNav({ children }) {
 
               {/* Search & Profile */}
               <div className="flex items-center space-x-3 relative">
-                {/* Search Button */}
                 <button
                   onClick={handleSearchClick}
                   className="flex items-center space-x-2 bg-gray-100 hover:bg-gray-200 rounded-xl px-3 py-2 transition-all duration-300 hover:scale-105"
@@ -126,7 +119,6 @@ export default function LayoutWithNav({ children }) {
                   <span className="text-gray-600 font-medium text-sm hidden sm:block">Search</span>
                 </button>
 
-                {/* Profile Menu */}
                 <div
                   className="relative"
                   ref={menuRef}
@@ -151,7 +143,6 @@ export default function LayoutWithNav({ children }) {
                     </span>
                   </button>
 
-                  {/* Dropdown */}
                   {showProfileMenu && (
                     <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 p-4 z-50">
                       {user ? (
@@ -203,8 +194,6 @@ export default function LayoutWithNav({ children }) {
                               ? 'Login'
                               : 'Sign Up'}
                           </button>
-
-                          {/* Google Login */}
                           <button
                             type="button"
                             onClick={handleGoogleLogin}
@@ -219,7 +208,6 @@ export default function LayoutWithNav({ children }) {
                               Sign in with Google
                             </span>
                           </button>
-
                           <p
                             onClick={() =>
                               setAuthMode(authMode === 'login' ? 'signup' : 'login')
@@ -240,31 +228,30 @@ export default function LayoutWithNav({ children }) {
           </div>
         </header>
 
-        {/* Page content */}
         <main className="pb-20">{children}</main>
 
-        {/* Bottom Nav */}
-       <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-t border-gray-200 z-50">
-  <div className="flex items-center justify-around p-2">
-    {[
-      { icon: <Home size={20} />, name: 'Home', path: '/' },
-      { icon: <User size={20} />, name: 'Profile', path: '/profile' },
-      { icon: <Settings size={20} />, name: 'Settings', path: '/settings' },
-    ].map((item, index) => (
-      <button
-        key={index}
-        onClick={() => router.push(item.path)}
-        className={`flex flex-col items-center p-2 flex-1 transition-all duration-300 ${
-          pathname === item.path ? 'text-[#0e1e55]' : 'text-gray-600'
-        }`}
-      >
-        {item.icon}
-        <span className="text-xs font-medium">{item.name}</span>
-      </button>
-    ))}
-  </div>
-</nav>
-
+        {/* ✅ Bottom Navigation with Partner added */}
+        <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-t border-gray-200 z-50">
+          <div className="flex items-center justify-around p-2">
+            {[
+              { icon: <Home size={20} />, name: 'Home', path: '/' },
+              { icon: <Handshake size={20} />, name: 'Partner', path: '/partner' }, // ✅ new button
+              { icon: <User size={20} />, name: 'Profile', path: '/profile' },
+              { icon: <Settings size={20} />, name: 'Settings', path: '/settings' },
+            ].map((item, index) => (
+              <button
+                key={index}
+                onClick={() => router.push(item.path)}
+                className={`flex flex-col items-center p-2 flex-1 transition-all duration-300 ${
+                  pathname === item.path ? 'text-[#0e1e55]' : 'text-gray-600'
+                }`}
+              >
+                {item.icon}
+                <span className="text-xs font-medium">{item.name}</span>
+              </button>
+            ))}
+          </div>
+        </nav>
       </div>
     </div>
   );
