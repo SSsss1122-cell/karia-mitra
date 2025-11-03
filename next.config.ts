@@ -1,22 +1,25 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Enable standalone output for Netlify to serve dynamic routes correctly
-  output: "standalone",
-
-  // Keep strict mode ON (recommended)
+  output: "export", // ✅ builds static site into /out
   reactStrictMode: true,
-
-  // Allow image optimization for external sources
   images: {
-    domains: [
-      "images.unsplash.com",
-      "lh3.googleusercontent.com",
-      "tkdegywzonhbzdjfxosq.supabase.co", // ✅ add your Supabase storage domain
+    unoptimized: true, // ✅ required for static export (no Image Optimization server)
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "tkdegywzonhbzdjfxosq.supabase.co",
+      },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
+      {
+        protocol: "https",
+        hostname: "lh3.googleusercontent.com",
+      },
     ],
   },
-
-  // Optional: improve performance during build
   experimental: {
     optimizeCss: true,
   },

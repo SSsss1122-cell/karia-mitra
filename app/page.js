@@ -8,7 +8,37 @@ import { supabase } from './lib/supabase';
 export default function HomePage() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [user, setUser] = useState(null);
+  const [updateInfo, setUpdateInfo] = useState(null); // ✅ added for app update info
   const router = useRouter();
+
+  // ✅ App update checker (new addition)
+  useEffect(() => {
+    const checkForUpdates = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('app_updates')
+          .select('*')
+          .order('id', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (data) {
+          const currentVersion = '1.0.0'; // change this when you release a new version
+          if (data.version !== currentVersion) {
+            setUpdateInfo(data);
+            alert(`🚀 A new version (${data.version}) is available!`);
+          }
+        }
+      } catch (err) {
+        console.error('Update check error:', err.message);
+      }
+    };
+
+    checkForUpdates();
+  }, []);
+
 
   // Professional categories with beautiful gradient colors
   const professionalServices = [
