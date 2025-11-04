@@ -16,7 +16,10 @@ import {
   X,
   ArrowRight,
   Shield,
-  Filter
+  Filter,
+  MessageCircle,
+  Calendar,
+  User
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -28,8 +31,14 @@ export default function EngineersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeFilter, setActiveFilter] = useState('all');
+  const [showBookingModal, setShowBookingModal] = useState(false);
 
-  // Filter types with all engineering categories
+  // Support contact details
+  const supportContact = {
+    phone: '9480072737',
+    name: 'Karia Mitra Support'
+  };
+
   const filterTypes = [
     { key: 'all', label: 'All Engineers' },
     { key: 'site', label: 'Site Engineer' },
@@ -101,12 +110,39 @@ export default function EngineersPage() {
     filterEngineers();
   }, [activeFilter, engineers]);
 
-  const handleCall = (phone) => {
-    if (!phone) {
-      alert('Phone number not available.');
-      return;
-    }
-    window.location.href = `tel:${phone}`;
+  const handleBookEngineer = (engineer) => {
+    setSelectedEngineer(engineer);
+    setShowBookingModal(true);
+  };
+
+  const handleWhatsAppBooking = () => {
+    if (!selectedEngineer) return;
+
+    const message = `🚀 *Booking Request - Karia Mitra* 🚀
+
+👤 *I want to book an engineer:*
+• *Engineer:* ${selectedEngineer.Name}
+• *Specialization:* ${selectedEngineer.Specialization || 'Professional Engineer'}
+• *Rating:* ${selectedEngineer.Rating || 'New'} ⭐
+
+🏗️ *Project Details:* [Please share your project requirements]
+
+📞 *My Contact:* [Your phone number]
+
+📍 *Project Location:* [Your location]
+
+I found this expert on Karia Mitra and would like to proceed with the booking!`;
+
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${supportContact.phone}?text=${encodedMessage}`;
+    
+    window.open(whatsappUrl, '_blank');
+    setShowBookingModal(false);
+    setSelectedEngineer(null);
+  };
+
+  const handleCallSupport = () => {
+    window.location.href = `tel:${supportContact.phone}`;
   };
 
   if (loading) {
@@ -140,7 +176,7 @@ export default function EngineersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 pb-32 sm:pb-0"> {/* Increased bottom padding for mobile */}
       {/* Header */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -161,7 +197,7 @@ export default function EngineersPage() {
                     Professional Engineers
                   </h1>
                   <p className="text-gray-600 text-xs sm:text-sm mt-0.5">
-                    Certified experts for your projects
+                    Book certified experts for your projects
                   </p>
                 </div>
               </div>
@@ -195,7 +231,7 @@ export default function EngineersPage() {
                 Available Engineers
               </h2>
               <p className="text-gray-600 text-xs sm:text-sm">
-                Tap on an engineer to view details and contact
+                Tap to view details and book via WhatsApp
               </p>
             </div>
             <div className="flex items-center space-x-2 text-gray-500">
@@ -239,8 +275,8 @@ export default function EngineersPage() {
         </div>
       </div>
 
-      {/* Engineer List - Minimal View */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 pb-4 sm:pb-6 lg:pb-8">
+      {/* Engineer List */}
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 pb-32 sm:pb-6 lg:pb-8"> {/* Increased bottom padding for mobile */}
         {filteredEngineers.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
             {filteredEngineers.map((eng) => (
@@ -319,10 +355,10 @@ export default function EngineersPage() {
       </div>
 
       {/* Engineer Detail Modal */}
-      {selectedEngineer && (
+      {selectedEngineer && !showBookingModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
           <div 
-            className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-full sm:max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-full sm:max-w-2xl max-h-[85vh] sm:max-h-[80vh] overflow-y-auto" // Further reduced max-height
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -426,16 +462,118 @@ export default function EngineersPage() {
                 </div>
               )}
 
-              {/* Call Button */}
-              {selectedEngineer.Phone && (
+              {/* Action Buttons with More Bottom Spacing */}
+              <div className="space-y-3 sm:space-y-4 pt-6 pb-8 sm:pb-4"> {/* Increased top and bottom padding */}
                 <button
-                  onClick={() => handleCall(selectedEngineer.Phone)}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 sm:py-4 px-6 rounded-lg sm:rounded-xl transition-colors duration-200 flex items-center justify-center space-x-2 sm:space-x-3 text-base sm:text-lg"
+                  onClick={() => handleBookEngineer(selectedEngineer)}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-4 sm:py-4 px-6 rounded-lg sm:rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 sm:space-x-3 text-base sm:text-lg hover:shadow-lg hover:scale-105"
+                >
+                  <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6" />
+                  <span>Book via WhatsApp</span>
+                </button>
+                
+                <button
+                  onClick={handleCallSupport}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 sm:py-4 px-6 rounded-lg sm:rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 sm:space-x-3 text-base sm:text-lg hover:shadow-lg hover:scale-105"
                 >
                   <Phone className="w-5 h-5 sm:w-6 sm:h-6" />
-                  <span>Call {selectedEngineer.Name.split(' ')[0]}</span>
+                  <span>Call Support</span>
                 </button>
-              )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Booking Confirmation Modal */}
+      {showBookingModal && selectedEngineer && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
+          <div 
+            className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-full sm:max-w-md max-h-[85vh] overflow-y-auto" // Further reduced max-height
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="relative p-6 sm:p-8 border-b border-gray-200">
+              <button
+                onClick={() => setShowBookingModal(false)}
+                className="absolute top-4 right-4 sm:top-6 sm:right-6 w-8 h-8 sm:w-9 sm:h-9 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors duration-200"
+              >
+                <X className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+              </button>
+
+              <div className="text-center">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Calendar className="w-8 h-8 sm:w-10 sm:h-10 text-green-600" />
+                </div>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+                  Book This Engineer
+                </h2>
+                <p className="text-gray-600 text-sm sm:text-base">
+                  Continue to WhatsApp to complete your booking
+                </p>
+              </div>
+            </div>
+
+            {/* Engineer Summary */}
+            <div className="p-6 sm:p-8">
+              <div className="bg-gray-50 rounded-xl p-4 sm:p-6 mb-6">
+                <div className="flex items-center space-x-4">
+                  <img
+                    src={selectedEngineer.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'}
+                    alt={selectedEngineer.Name}
+                    className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl object-cover border-2 border-white shadow-sm"
+                  />
+                  <div>
+                    <h3 className="font-bold text-gray-900 text-lg sm:text-xl">
+                      {selectedEngineer.Name}
+                    </h3>
+                    <p className="text-indigo-600 font-semibold text-sm sm:text-base">
+                      {selectedEngineer.Specialization}
+                    </p>
+                    <div className="flex items-center space-x-1 mt-1">
+                      <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                      <span className="text-sm font-semibold text-gray-700">
+                        {selectedEngineer.Rating || 'New'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Booking Info */}
+              <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
+                <div className="flex items-center space-x-3 text-sm sm:text-base text-gray-600">
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  <span>No advance payment required</span>
+                </div>
+                <div className="flex items-center space-x-3 text-sm sm:text-base text-gray-600">
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  <span>Share your project details</span>
+                </div>
+                <div className="flex items-center space-x-3 text-sm sm:text-base text-gray-600">
+                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  <span>Get instant confirmation</span>
+                </div>
+              </div>
+
+              {/* Action Buttons with More Bottom Spacing */}
+              <div className="space-y-3 pb-8 sm:pb-4"> {/* Increased bottom padding */}
+                <button
+                  onClick={handleWhatsAppBooking}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-3 text-lg hover:shadow-lg hover:scale-105"
+                >
+                  <MessageCircle className="w-6 h-6" />
+                  <span>Continue to WhatsApp</span>
+                </button>
+                
+                <button
+                  onClick={handleCallSupport}
+                  className="w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-3 text-base hover:shadow-lg"
+                >
+                  <Phone className="w-5 h-5" />
+                  <span>Call Support First</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
