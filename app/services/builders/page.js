@@ -220,7 +220,7 @@ export default function BuildersPage() {
       </div>
 
       {/* Builder List - Mobile First Design */}
-      <div className="px-3 py-4 pb-32">
+      <div className="px-3 py-4 pb-24"> {/* Reduced bottom padding */}
         <div className="mb-4">
           <h2 className="text-base font-bold text-gray-900 mb-1">
             Available Builders
@@ -326,7 +326,7 @@ export default function BuildersPage() {
       {selectedBuilder && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 animate-in fade-in duration-300">
           <div 
-            className="bg-white rounded-t-2xl sm:rounded-3xl shadow-2xl w-full max-w-full sm:max-w-2xl flex flex-col max-h-[90vh] sm:max-h-[85vh] transform transition-all duration-300 scale-95 sm:scale-100 animate-in slide-in-from-bottom duration-300"
+            className="bg-white rounded-t-2xl sm:rounded-3xl shadow-2xl w-full max-w-full sm:max-w-2xl flex flex-col max-h-[95vh] sm:max-h-[85vh] transform transition-all duration-300 scale-95 sm:scale-100 animate-in slide-in-from-bottom duration-300"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Enhanced Header with Gradient */}
@@ -384,7 +384,7 @@ export default function BuildersPage() {
             </div>
 
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto pb-24 sm:pb-4">
+            <div className="flex-1 overflow-y-auto pb-28 sm:pb-4"> {/* Increased bottom padding for mobile */}
               <div className="p-6 space-y-6">
                 {/* Specialties Section */}
                 {selectedBuilder.Specialties && selectedBuilder.Specialties.length > 0 && (
@@ -499,8 +499,8 @@ export default function BuildersPage() {
               </div>
             </div>
 
-            {/* Enhanced Action Buttons */}
-            <div className="sticky bottom-0 bg-white border-t border-gray-200 p-6 pb-8 sm:pb-6 backdrop-blur-sm bg-white/95">
+            {/* Enhanced Action Buttons - Mobile Optimized */}
+            <div className="sticky bottom-0 bg-white border-t border-gray-200 p-6 pb-8 sm:pb-6 backdrop-blur-sm bg-white/95 safe-area-padding">
               <div className="grid grid-cols-2 gap-4">
                 {/* WhatsApp Button */}
                 <button
@@ -529,6 +529,13 @@ export default function BuildersPage() {
           </div>
         </div>
       )}
+
+      {/* Add CSS for safe areas */}
+      <style jsx>{`
+        .safe-area-padding {
+          padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+        }
+      `}</style>
     </div>
   );
 }

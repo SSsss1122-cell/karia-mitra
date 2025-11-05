@@ -345,7 +345,7 @@ export default function ContractorsPage() {
             </div>
 
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto pb-24 sm:pb-4">
+            <div className="flex-1 overflow-y-auto">
               <div className="p-6 space-y-6">
                 {/* Stats Grid */}
                 <div className="grid grid-cols-2 gap-4">
@@ -431,8 +431,8 @@ export default function ContractorsPage() {
               </div>
             </div>
 
-            {/* Enhanced Action Buttons */}
-            <div className="sticky bottom-0 bg-white border-t border-gray-200 p-6 pb-8 sm:pb-6 backdrop-blur-sm bg-white/95">
+            {/* Enhanced Action Buttons - Fixed positioning to avoid bottom nav overlap */}
+            <div className="sticky bottom-0 bg-white border-t border-gray-200 p-6 backdrop-blur-sm bg-white/95 pb-24 sm:pb-6">
               <div className="grid grid-cols-2 gap-4">
                 {/* WhatsApp Button */}
                 <button

@@ -147,10 +147,41 @@ I found this expert on Karia Mitra and would like to proceed with the booking!`;
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center px-4">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 text-lg">Loading professional engineers...</p>
+      <div className="min-h-screen bg-gradient-to-br from-[#f8fafc] via-[#f1f5f9] to-[#e2e8f0]">
+        {/* Loading Skeleton */}
+        <div className="w-full bg-gray-200 h-1.5">
+          <div className="h-full bg-gradient-to-r from-[#0e1e55] to-[#1e3a8a] animate-pulse"></div>
+        </div>
+
+        {/* Header Skeleton */}
+        <header className="bg-white shadow-sm border-b">
+          <div className="px-4 py-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gray-200 rounded-lg animate-pulse"></div>
+              <div className="space-y-2">
+                <div className="w-32 h-4 bg-gray-200 rounded animate-pulse"></div>
+                <div className="w-24 h-3 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Content Skeleton */}
+        <div className="px-4 py-6">
+          <div className="grid grid-cols-1 gap-4">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div key={index} className="bg-white rounded-xl shadow-sm p-4 animate-pulse">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+                  <div className="flex-1 space-y-2">
+                    <div className="w-3/4 h-4 bg-gray-200 rounded"></div>
+                    <div className="w-1/2 h-3 bg-gray-200 rounded"></div>
+                    <div className="w-2/3 h-3 bg-gray-200 rounded"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -158,7 +189,7 @@ I found this expert on Karia Mitra and would like to proceed with the booking!`;
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 flex items-center justify-center px-4">
+      <div className="min-h-screen bg-gradient-to-br from-[#f8fafc] via-[#f1f5f9] to-[#e2e8f0] flex items-center justify-center px-4">
         <div className="text-center">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <X className="w-8 h-8 text-red-600" />
@@ -166,7 +197,7 @@ I found this expert on Karia Mitra and would like to proceed with the booking!`;
           <p className="text-red-600 text-lg mb-4">Error: {error}</p>
           <button 
             onClick={() => window.location.reload()}
-            className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            className="px-6 py-3 bg-gradient-to-r from-[#0e1e55] to-[#1e3a8a] text-white rounded-lg hover:opacity-90 transition-colors text-sm"
           >
             Try Again
           </button>
@@ -176,167 +207,169 @@ I found this expert on Karia Mitra and would like to proceed with the booking!`;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-purple-50 pb-32 sm:pb-0"> {/* Increased bottom padding for mobile */}
-      {/* Header */}
+    <div className="min-h-screen bg-gradient-to-br from-[#f8fafc] via-[#f1f5f9] to-[#e2e8f0]">
+      {/* Header - Mobile Optimized */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="px-3 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2">
               <button
                 onClick={() => router.back()}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
               >
-                <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-gray-600" />
+                <ArrowLeft className="w-5 h-5 text-gray-600" />
               </button>
-              <div className="flex items-center space-x-2 sm:space-x-3">
-                <div className="p-2 sm:p-3 bg-indigo-100 rounded-xl">
-                  <Briefcase className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-600" />
+              <div className="flex items-center space-x-2">
+                <div className="p-2 bg-[#0e1e55]/10 rounded-lg">
+                  <Briefcase className="w-5 h-5 text-[#0e1e55]" />
                 </div>
                 <div>
-                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
+                  <h1 className="text-lg font-bold text-gray-900">
                     Professional Engineers
                   </h1>
-                  <p className="text-gray-600 text-xs sm:text-sm mt-0.5">
-                    Book certified experts for your projects
+                  <p className="text-gray-600 text-xs">
+                    Certified experts for your projects
                   </p>
                 </div>
               </div>
             </div>
-            <div className="hidden sm:block">
-              <div className="flex items-center space-x-2 text-xs sm:text-sm text-gray-500 bg-indigo-50 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full">
-                <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500" />
-                <span>{filteredEngineers.length} available</span>
-              </div>
+            <div className="flex items-center space-x-1 text-xs text-gray-500 bg-[#0e1e55]/5 px-2 py-1 rounded-full">
+              <CheckCircle className="w-3 h-3 text-green-500" />
+              <span>{filteredEngineers.length}</span>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile counter for small screens */}
-      <div className="sm:hidden bg-indigo-50 border-b border-indigo-100">
-        <div className="max-w-7xl mx-auto px-4 py-2">
-          <div className="flex items-center justify-center space-x-2 text-xs text-gray-600">
-            <CheckCircle className="w-3 h-3 text-green-500" />
-            <span>{filteredEngineers.length} engineers available</span>
           </div>
         </div>
       </div>
 
       {/* Filter Section */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 pt-4 sm:pt-6">
-        <div className="mb-4 sm:mb-6 px-2 sm:px-0">
-          <div className="flex items-center justify-between mb-3 sm:mb-4">
-            <div>
-              <h2 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">
-                Available Engineers
-              </h2>
-              <p className="text-gray-600 text-xs sm:text-sm">
-                Tap to view details and book via WhatsApp
-              </p>
-            </div>
-            <div className="flex items-center space-x-2 text-gray-500">
-              <Filter className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span className="text-xs sm:text-sm font-medium">Filter:</span>
-            </div>
-          </div>
+      <div className="px-3 py-4">
+        <div className="mb-4">
+          <h2 className="text-base font-bold text-gray-900 mb-1">
+            Available Engineers
+          </h2>
+          <p className="text-gray-600 text-xs">
+            Tap to view profile and book
+          </p>
+        </div>
 
-          {/* Filter Buttons - Scrollable on mobile */}
-          <div className="relative">
-            <div className="flex space-x-2 sm:space-x-3 overflow-x-auto pb-3 -mx-2 px-2 scrollbar-hide">
-              {filterTypes.map((filter) => (
-                <button
-                  key={filter.key}
-                  onClick={() => setActiveFilter(filter.key)}
-                  className={`flex-shrink-0 px-4 py-2 sm:px-5 sm:py-2.5 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 border whitespace-nowrap ${
-                    activeFilter === filter.key
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-100 transform scale-105'
-                      : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
-                  }`}
-                >
-                  {filter.label}
-                </button>
-              ))}
-            </div>
+        {/* Filter Buttons - Scrollable */}
+        <div className="mb-4">
+          <div className="flex items-center space-x-2 mb-2">
+            <Filter className="w-4 h-4 text-gray-500" />
+            <span className="text-xs font-medium text-gray-600">Filter by:</span>
           </div>
+          <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide">
+            {filterTypes.map((filter) => (
+              <button
+                key={filter.key}
+                onClick={() => setActiveFilter(filter.key)}
+                className={`flex-shrink-0 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 border whitespace-nowrap ${
+                  activeFilter === filter.key
+                    ? 'bg-[#0e1e55] text-white border-[#0e1e55] shadow-md transform scale-105'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
-          {/* Active Filter Count */}
-          <div className="mt-3 flex items-center space-x-2 text-xs sm:text-sm text-gray-500">
-            <span>Showing</span>
-            <span className="font-semibold text-indigo-600">{filteredEngineers.length}</span>
-            <span>of</span>
-            <span className="font-semibold text-gray-700">{engineers.length}</span>
-            <span>engineers</span>
-            {activeFilter !== 'all' && (
-              <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-xs">
-                {filterTypes.find(f => f.key === activeFilter)?.label}
-              </span>
-            )}
-          </div>
+        {/* Active Filter Count */}
+        <div className="flex items-center space-x-2 text-xs text-gray-500 mb-4">
+          <span>Showing</span>
+          <span className="font-semibold text-[#0e1e55]">{filteredEngineers.length}</span>
+          <span>of</span>
+          <span className="font-semibold text-gray-700">{engineers.length}</span>
+          <span>engineers</span>
+          {activeFilter !== 'all' && (
+            <span className="bg-[#0e1e55]/10 text-[#0e1e55] px-2 py-0.5 rounded-full text-xs">
+              {filterTypes.find(f => f.key === activeFilter)?.label}
+            </span>
+          )}
         </div>
       </div>
 
       {/* Engineer List */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 pb-32 sm:pb-6 lg:pb-8"> {/* Increased bottom padding for mobile */}
+      <div className="px-3 py-4 pb-24">
         {filteredEngineers.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+          <div className="grid grid-cols-1 gap-3">
             {filteredEngineers.map((eng) => (
               <div
                 key={eng.id}
                 onClick={() => setSelectedEngineer(eng)}
-                className="group bg-white/80 backdrop-blur-sm rounded-xl sm:rounded-2xl shadow-sm border border-gray-200/50 p-4 sm:p-6 hover:shadow-lg sm:hover:shadow-xl hover:border-indigo-300 transition-all duration-300 cursor-pointer transform hover:-translate-y-1"
+                className="group bg-white rounded-xl shadow-sm border border-gray-200 p-3 hover:shadow-md transition-all duration-300 cursor-pointer active:scale-95"
               >
                 {/* Profile Section */}
-                <div className="flex items-center space-x-3 sm:space-x-4">
+                <div className="flex items-center space-x-3">
                   <div className="relative flex-shrink-0">
                     <img
                       src={eng.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'}
                       alt={eng.Name}
-                      className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 rounded-xl sm:rounded-2xl object-cover border-2 border-white shadow-md group-hover:border-indigo-200 transition-colors"
+                      className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm"
                     />
-                    <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-0.5 sm:p-1 border-2 border-white">
-                      <Shield className="w-2 h-2 sm:w-3 sm:h-3 text-white" />
+                    <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-0.5 border-2 border-white">
+                      <Shield className="w-2.5 h-2.5 text-white" />
                     </div>
                   </div>
                   
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-gray-900 text-sm sm:text-base lg:text-lg truncate group-hover:text-indigo-600 transition-colors">
+                    <h3 className="font-bold text-gray-900 text-sm truncate">
                       {eng.Name}
                     </h3>
-                    <p className="text-gray-500 text-xs sm:text-sm truncate">
-                      {eng.Specialization || 'General Engineer'}
+                    <p className="text-gray-500 text-xs truncate">
+                      {eng.Specialization || 'Professional Engineer'}
                     </p>
                     
                     {/* Rating and Experience */}
-                    <div className="flex items-center space-x-1 mt-1">
-                      <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400 fill-current" />
-                      <span className="text-xs sm:text-sm font-semibold text-gray-700">
-                        {eng.Rating || 'New'}
-                      </span>
-                      {eng.Experience && (
-                        <span className="text-gray-400 text-xs">•</span>
-                      )}
-                      {eng.Experience && (
-                        <span className="text-xs text-gray-500 truncate">
-                          {eng.Experience}
+                    <div className="flex items-center space-x-2 mt-1">
+                      <div className="flex items-center space-x-1">
+                        <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                        <span className="text-xs font-semibold text-gray-700">
+                          {eng.Rating || 'New'}
                         </span>
+                      </div>
+                      <span className="text-gray-300 text-xs">•</span>
+                      {eng.Experience && (
+                        <div className="flex items-center space-x-1 text-gray-500">
+                          <Briefcase className="w-3 h-3" />
+                          <span className="text-xs">{eng.Experience}</span>
+                        </div>
                       )}
                     </div>
+
+                    {/* Location */}
+                    {eng.Location && (
+                      <div className="flex items-center text-gray-500 text-xs mt-1">
+                        <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
+                        <span className="truncate">{eng.Location}</span>
+                      </div>
+                    )}
                   </div>
                   
-                  <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 group-hover:text-indigo-500 transition-colors transform group-hover:translate-x-0.5 sm:group-hover:translate-x-1 flex-shrink-0" />
+                  <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
                 </div>
+
+                {/* Specialization Badge */}
+                {eng.Specialization && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    <span className="px-1.5 py-0.5 bg-[#0e1e55]/10 text-[#0e1e55] rounded-full text-xs">
+                      {eng.Specialization}
+                    </span>
+                  </div>
+                )}
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-12 sm:py-16 px-4">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
-              <Briefcase className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 text-gray-400" />
+          <div className="text-center py-12 px-4">
+            <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Briefcase className="w-6 h-6 text-gray-400" />
             </div>
-            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
+            <h3 className="text-base font-semibold text-gray-900 mb-2">
               No Engineers Found
             </h3>
-            <p className="text-gray-600 text-sm sm:text-base max-w-md mx-auto mb-4">
+            <p className="text-gray-600 text-sm">
               {activeFilter === 'all' 
                 ? 'There are currently no engineers available.' 
                 : `No ${filterTypes.find(f => f.key === activeFilter)?.label.toLowerCase()} found.`
@@ -345,7 +378,7 @@ I found this expert on Karia Mitra and would like to proceed with the booking!`;
             {activeFilter !== 'all' && (
               <button
                 onClick={() => setActiveFilter('all')}
-                className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm sm:text-base"
+                className="mt-3 px-4 py-2 bg-[#0e1e55] text-white rounded-lg hover:opacity-90 transition-colors text-sm"
               >
                 Show All Engineers
               </button>
@@ -354,230 +387,294 @@ I found this expert on Karia Mitra and would like to proceed with the booking!`;
         )}
       </div>
 
-      {/* Engineer Detail Modal */}
+      {/* Enhanced Engineer Detail Modal */}
       {selectedEngineer && !showBookingModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 animate-in fade-in duration-300">
           <div 
-            className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-full sm:max-w-2xl max-h-[85vh] sm:max-h-[80vh] overflow-y-auto" // Further reduced max-height
+            className="bg-white rounded-t-2xl sm:rounded-3xl shadow-2xl w-full max-w-full sm:max-w-2xl flex flex-col max-h-[95vh] sm:max-h-[85vh] transform transition-all duration-300 scale-95 sm:scale-100 animate-in slide-in-from-bottom duration-300"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
-            <div className="relative p-4 sm:p-6 lg:p-8 border-b border-gray-200">
+            {/* Enhanced Header with Gradient */}
+            <div className="bg-gradient-to-r from-[#0e1e55] to-[#1e3a8a] rounded-t-2xl sm:rounded-t-3xl p-6 relative">
+              {/* Close Button */}
               <button
                 onClick={() => setSelectedEngineer(null)}
-                className="absolute top-3 right-3 sm:top-4 sm:right-4 lg:top-6 lg:right-6 w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors duration-200"
+                className="absolute top-4 right-4 w-10 h-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-200 z-10 hover:scale-110"
               >
-                <X className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+                <X className="w-5 h-5 text-white" />
               </button>
 
-              <div className="flex items-start space-x-4 sm:space-x-6">
-                <img
-                  src={selectedEngineer.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'}
-                  alt={selectedEngineer.Name}
-                  className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-xl sm:rounded-2xl object-cover border-4 border-white shadow-lg flex-shrink-0"
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-2">
-                    <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 truncate">
-                      {selectedEngineer.Name}
-                    </h2>
-                    <div className="flex items-center space-x-1 bg-green-100 text-green-800 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm mt-1 sm:mt-0 w-fit">
-                      <Shield className="w-3 h-3 sm:w-4 sm:h-4" />
-                      <span>Verified</span>
+              {/* Profile Header */}
+              <div className="flex items-center space-x-4">
+                <div className="relative">
+                  <div className="relative">
+                    <img
+                      src={selectedEngineer.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'}
+                      alt={selectedEngineer.Name}
+                      className="w-20 h-20 rounded-2xl object-cover border-4 border-white/80 shadow-2xl"
+                    />
+                    <div className="absolute -bottom-2 -right-2 bg-green-500 rounded-full p-2 border-4 border-white">
+                      <Shield className="w-4 h-4 text-white" />
                     </div>
                   </div>
-                  <p className="text-lg sm:text-xl text-indigo-600 font-semibold mb-3 sm:mb-4 truncate">
+                </div>
+                
+                <div className="flex-1 text-white">
+                  <h2 className="text-2xl font-bold mb-1 drop-shadow-lg">
+                    {selectedEngineer.Name}
+                  </h2>
+                  <p className="text-blue-100 text-lg font-medium mb-3 drop-shadow-lg">
                     {selectedEngineer.Specialization || 'Professional Engineer'}
                   </p>
                   
-                  <div className="flex items-center space-x-3 sm:space-x-4 text-xs sm:text-sm text-gray-600">
-                    <div className="flex items-center space-x-1">
-                      <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400 fill-current" />
-                      <span className="font-semibold">{selectedEngineer.Rating || 'New'}</span>
+                  {/* Stats Row */}
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2 bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
+                      <Star className="w-4 h-4 text-yellow-300 fill-current" />
+                      <span className="font-bold text-white text-sm">
+                        {selectedEngineer.Rating || 'New'}
+                      </span>
                     </div>
-                    <div className="flex items-center space-x-1">
-                      <Briefcase className="w-3 h-3 sm:w-4 sm:h-4" />
-                      <span>{selectedEngineer.Site_completed || 0} projects</span>
+                    <div className="flex items-center space-x-2 bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
+                      <Briefcase className="w-4 h-4 text-white" />
+                      <span className="font-bold text-white text-sm">
+                        {selectedEngineer.Site_completed || 0} Projects
+                      </span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Details */}
-            <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
-              {/* Basic Info Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <div className="flex items-center space-x-2 sm:space-x-3 p-3 sm:p-4 bg-gray-50 rounded-lg sm:rounded-xl">
-                  <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600 flex-shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-xs sm:text-sm text-gray-500">Location</p>
-                    <p className="font-semibold text-gray-900 text-sm sm:text-base truncate">
-                      {selectedEngineer.Location || 'Not specified'}
-                    </p>
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto pb-28 sm:pb-4">
+              <div className="p-6 space-y-6">
+                {/* Stats Grid */}
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Experience */}
+                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-100 transform hover:scale-105 transition-transform duration-200">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <Clock className="w-6 h-6 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-green-600 font-semibold">Experience</p>
+                        <p className="font-bold text-gray-900 text-sm">
+                          {selectedEngineer.Experience || 'Not specified'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Location */}
+                  <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-100 transform hover:scale-105 transition-transform duration-200">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <MapPin className="w-6 h-6 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-purple-600 font-semibold">Location</p>
+                        <p className="font-bold text-gray-900 text-sm">
+                          {selectedEngineer.Location || 'Not specified'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Qualification */}
+                  <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-4 border border-orange-100 transform hover:scale-105 transition-transform duration-200">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <GraduationCap className="w-6 h-6 text-orange-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-orange-600 font-semibold">Qualification</p>
+                        <p className="font-bold text-gray-900 text-sm">
+                          {selectedEngineer.Qualification || 'Not specified'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Projects */}
+                  <div className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-xl p-4 border border-cyan-100 transform hover:scale-105 transition-transform duration-200">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center">
+                        <Wrench className="w-6 h-6 text-cyan-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-cyan-600 font-semibold">Projects</p>
+                        <p className="font-bold text-gray-900 text-lg">
+                          {selectedEngineer.Site_completed || 0}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-2 sm:space-x-3 p-3 sm:p-4 bg-gray-50 rounded-lg sm:rounded-xl">
-                  <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600 flex-shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-xs sm:text-sm text-gray-500">Experience</p>
-                    <p className="font-semibold text-gray-900 text-sm sm:text-base truncate">
-                      {selectedEngineer.Experience || 'Not specified'}
+                {/* Expertise Section */}
+                {selectedEngineer.Specialization && (
+                  <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-5 border border-blue-100">
+                    <h3 className="font-bold text-gray-900 text-lg mb-3 flex items-center">
+                      <Award className="w-5 h-5 text-blue-600 mr-2" />
+                      Area of Expertise
+                    </h3>
+                    <p className="text-gray-700 leading-relaxed text-sm">
+                      {selectedEngineer.Specialization}
                     </p>
                   </div>
-                </div>
+                )}
 
-                <div className="flex items-center space-x-2 sm:space-x-3 p-3 sm:p-4 bg-gray-50 rounded-lg sm:rounded-xl">
-                  <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600 flex-shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-xs sm:text-sm text-gray-500">Qualification</p>
-                    <p className="font-semibold text-gray-900 text-sm sm:text-base truncate">
-                      {selectedEngineer.Qualification || 'Not specified'}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center space-x-2 sm:space-x-3 p-3 sm:p-4 bg-gray-50 rounded-lg sm:rounded-xl">
-                  <Wrench className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600 flex-shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-xs sm:text-sm text-gray-500">Projects</p>
-                    <p className="font-semibold text-gray-900 text-sm sm:text-base">
-                      {selectedEngineer.Site_completed || 0}
-                    </p>
+                {/* Verification Badge */}
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-4 border border-green-200">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                      <Shield className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-green-800 text-sm">Verified Engineer</p>
+                      <p className="text-green-600 text-xs">Profile verified by Karia Mitra</p>
+                    </div>
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Expertise Section */}
-              {selectedEngineer.Specialization && (
-                <div className="bg-indigo-50 rounded-lg sm:rounded-xl p-4 sm:p-6">
-                  <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-2 sm:mb-3 flex items-center">
-                    <Award className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-indigo-600 flex-shrink-0" />
-                    Area of Expertise
-                  </h3>
-                  <p className="text-gray-700 text-sm sm:text-base leading-relaxed">
-                    {selectedEngineer.Specialization}
-                  </p>
-                </div>
-              )}
-
-              {/* Action Buttons with More Bottom Spacing */}
-              <div className="space-y-3 sm:space-y-4 pt-6 pb-8 sm:pb-4"> {/* Increased top and bottom padding */}
+            {/* Enhanced Action Buttons - Mobile Optimized */}
+            <div className="sticky bottom-0 bg-white border-t border-gray-200 p-6 pb-8 sm:pb-6 backdrop-blur-sm bg-white/95 safe-area-padding">
+              <div className="grid grid-cols-2 gap-4">
+                {/* WhatsApp Button */}
                 <button
                   onClick={() => handleBookEngineer(selectedEngineer)}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-4 sm:py-4 px-6 rounded-lg sm:rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 sm:space-x-3 text-base sm:text-lg hover:shadow-lg hover:scale-105"
+                  className="group bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
                 >
-                  <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6" />
-                  <span>Book via WhatsApp</span>
+                  <MessageCircle className="w-6 h-6 group-hover:scale-110 transition-transform duration-200" />
+                  <span className="text-base">WhatsApp</span>
                 </button>
-                
+
+                {/* Call Button */}
                 <button
                   onClick={handleCallSupport}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 sm:py-4 px-6 rounded-lg sm:rounded-xl transition-all duration-200 flex items-center justify-center space-x-2 sm:space-x-3 text-base sm:text-lg hover:shadow-lg hover:scale-105"
+                  className="group bg-gradient-to-r from-[#0e1e55] to-[#1e3a8a] hover:from-[#1e3a8a] hover:to-[#0e1e55] text-white font-bold py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
                 >
-                  <Phone className="w-5 h-5 sm:w-6 sm:h-6" />
-                  <span>Call Support</span>
+                  <Phone className="w-6 h-6 group-hover:scale-110 transition-transform duration-200" />
+                  <span className="text-base">Call</span>
                 </button>
               </div>
+              
+              {/* Contact Note */}
+              <p className="text-xs text-gray-500 text-center mt-3">
+                Contact Karia Mitra to connect with {selectedEngineer.Name}
+              </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Booking Confirmation Modal */}
+      {/* Enhanced Booking Confirmation Modal */}
       {showBookingModal && selectedEngineer && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 animate-in fade-in duration-300">
           <div 
-            className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-full sm:max-w-md max-h-[85vh] overflow-y-auto" // Further reduced max-height
+            className="bg-white rounded-t-2xl sm:rounded-3xl shadow-2xl w-full max-w-full sm:max-w-md flex flex-col max-h-[95vh] sm:max-h-[85vh] transform transition-all duration-300 scale-95 sm:scale-100 animate-in slide-in-from-bottom duration-300"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="relative p-6 sm:p-8 border-b border-gray-200">
+            <div className="bg-gradient-to-r from-[#0e1e55] to-[#1e3a8a] rounded-t-2xl sm:rounded-t-3xl p-6 relative">
               <button
                 onClick={() => setShowBookingModal(false)}
-                className="absolute top-4 right-4 sm:top-6 sm:right-6 w-8 h-8 sm:w-9 sm:h-9 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors duration-200"
+                className="absolute top-4 right-4 w-10 h-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-200 z-10 hover:scale-110"
               >
-                <X className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+                <X className="w-5 h-5 text-white" />
               </button>
 
-              <div className="text-center">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Calendar className="w-8 h-8 sm:w-10 sm:h-10 text-green-600" />
+              <div className="text-center text-white">
+                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Calendar className="w-8 h-8 text-white" />
                 </div>
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
+                <h2 className="text-xl font-bold mb-2 drop-shadow-lg">
                   Book This Engineer
                 </h2>
-                <p className="text-gray-600 text-sm sm:text-base">
+                <p className="text-blue-100 text-sm drop-shadow-lg">
                   Continue to WhatsApp to complete your booking
                 </p>
               </div>
             </div>
 
             {/* Engineer Summary */}
-            <div className="p-6 sm:p-8">
-              <div className="bg-gray-50 rounded-xl p-4 sm:p-6 mb-6">
-                <div className="flex items-center space-x-4">
-                  <img
-                    src={selectedEngineer.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'}
-                    alt={selectedEngineer.Name}
-                    className="w-12 h-12 sm:w-16 sm:h-16 rounded-xl object-cover border-2 border-white shadow-sm"
-                  />
-                  <div>
-                    <h3 className="font-bold text-gray-900 text-lg sm:text-xl">
-                      {selectedEngineer.Name}
-                    </h3>
-                    <p className="text-indigo-600 font-semibold text-sm sm:text-base">
-                      {selectedEngineer.Specialization}
-                    </p>
-                    <div className="flex items-center space-x-1 mt-1">
-                      <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                      <span className="text-sm font-semibold text-gray-700">
-                        {selectedEngineer.Rating || 'New'}
-                      </span>
+            <div className="flex-1 overflow-y-auto pb-28 sm:pb-4">
+              <div className="p-6 space-y-6">
+                <div className="bg-gradient-to-br from-gray-50 to-slate-50 rounded-2xl p-5 border border-gray-200">
+                  <div className="flex items-center space-x-4">
+                    <img
+                      src={selectedEngineer.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'}
+                      alt={selectedEngineer.Name}
+                      className="w-16 h-16 rounded-2xl object-cover border-2 border-white shadow-lg"
+                    />
+                    <div>
+                      <h3 className="font-bold text-gray-900 text-lg">
+                        {selectedEngineer.Name}
+                      </h3>
+                      <p className="text-[#0e1e55] font-semibold text-sm">
+                        {selectedEngineer.Specialization}
+                      </p>
+                      <div className="flex items-center space-x-1 mt-1">
+                        <Star className="w-4 h-4 text-yellow-400 fill-current" />
+                        <span className="text-sm font-semibold text-gray-700">
+                          {selectedEngineer.Rating || 'New'}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Booking Info */}
-              <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
-                <div className="flex items-center space-x-3 text-sm sm:text-base text-gray-600">
-                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                  <span>No advance payment required</span>
-                </div>
-                <div className="flex items-center space-x-3 text-sm sm:text-base text-gray-600">
-                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                  <span>Share your project details</span>
-                </div>
-                <div className="flex items-center space-x-3 text-sm sm:text-base text-gray-600">
-                  <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                  <span>Get instant confirmation</span>
+                {/* Booking Info */}
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-3 text-sm text-gray-600">
+                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                    <span>No advance payment required</span>
+                  </div>
+                  <div className="flex items-center space-x-3 text-sm text-gray-600">
+                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                    <span>Share your project details</span>
+                  </div>
+                  <div className="flex items-center space-x-3 text-sm text-gray-600">
+                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                    <span>Get instant confirmation</span>
+                  </div>
                 </div>
               </div>
+            </div>
 
-              {/* Action Buttons with More Bottom Spacing */}
-              <div className="space-y-3 pb-8 sm:pb-4"> {/* Increased bottom padding */}
+            {/* Enhanced Action Buttons - Mobile Optimized */}
+            <div className="sticky bottom-0 bg-white border-t border-gray-200 p-6 pb-8 sm:pb-6 backdrop-blur-sm bg-white/95 safe-area-padding">
+              <div className="space-y-3">
                 <button
                   onClick={handleWhatsAppBooking}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-3 text-lg hover:shadow-lg hover:scale-105"
+                  className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
                 >
-                  <MessageCircle className="w-6 h-6" />
-                  <span>Continue to WhatsApp</span>
+                  <MessageCircle className="w-6 h-6 group-hover:scale-110 transition-transform duration-200" />
+                  <span className="text-base">Continue to WhatsApp</span>
                 </button>
                 
                 <button
                   onClick={handleCallSupport}
-                  className="w-full bg-gray-600 hover:bg-gray-700 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-200 flex items-center justify-center space-x-3 text-base hover:shadow-lg"
+                  className="w-full bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-bold py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
                 >
-                  <Phone className="w-5 h-5" />
-                  <span>Call Support First</span>
+                  <Phone className="w-6 h-6 group-hover:scale-110 transition-transform duration-200" />
+                  <span className="text-base">Call Support First</span>
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* Add CSS for safe areas */}
+      <style jsx>{`
+        .safe-area-padding {
+          padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+        }
+      `}</style>
     </div>
   );
 }
