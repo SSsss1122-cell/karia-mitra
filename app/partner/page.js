@@ -22,7 +22,11 @@ import {
   UserPlus,
   Key,
   Check,
-  X
+  X,
+  ChevronDown,
+  Image as ImageIcon,
+  Plus,
+  Trash2
 } from "lucide-react";
 
 export default function RoleLogin() {
@@ -37,17 +41,33 @@ export default function RoleLogin() {
   const [isRegister, setIsRegister] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [showExpertiseDropdown, setShowExpertiseDropdown] = useState(false);
   const [registerData, setRegisterData] = useState({
     name: "",
     email: "",
     location: "",
     experience: "",
     about: "",
-    expertise: ""
+    expertise: "",
+    profileImage: null
   });
+  const [workImages, setWorkImages] = useState([]);
+  const [uploadingWork, setUploadingWork] = useState(false);
+  const [uploadingProfile, setUploadingProfile] = useState(false);
   const fileInputRef = useRef(null);
+  const workFileInputRef = useRef(null);
+  const registerProfileInputRef = useRef(null);
 
-  // Role configurations with icons and colors
+  // Contractor expertise options
+  const contractorExpertiseOptions = [
+    "POP",
+    "RCC", 
+    "Electrician",
+    "Plumbing",
+    "Painter"
+  ];
+
+  // Role configurations with icons and colors - Updated based on actual table schemas
   const rolesConfig = {
     Contractor: {
       table: "Contractor",
@@ -65,7 +85,9 @@ export default function RoleLogin() {
         email: "email", 
         rating: "rating", 
         projects: "site_completed",
-        expertise: "expertise"
+        expertise: "expertise",
+        team_size: "team_size",
+        works: "works"
       }
     },
     Engineer: {
@@ -84,7 +106,9 @@ export default function RoleLogin() {
         email: "Email", 
         rating: "Rating", 
         projects: "Site_completed",
-        qualification: "Qualification"
+        qualification: "Qualification",
+        age: "Age",
+        works: "works"
       }
     },
     Architecture: {
@@ -102,7 +126,12 @@ export default function RoleLogin() {
         image: "image_url", 
         email: null, 
         rating: "rating", 
-        projects: null
+        projects: null,
+        category: "category",
+        architect_name: "architect_name",
+        project_cost: "project_cost",
+        year_built: "year_built",
+        works: "works"
       }
     },
     Labours: {
@@ -121,7 +150,11 @@ export default function RoleLogin() {
         email: "email", 
         rating: "rating", 
         projects: "site_completed",
-        expertise: "expertise"
+        expertise: "expertise",
+        rate: "rate",
+        team_size: "team_size",
+        stream: "stream",
+        works: "works"
       }
     },
     Builder: {
@@ -140,7 +173,11 @@ export default function RoleLogin() {
         email: "Email", 
         rating: "Rating", 
         projects: "Projects_completed",
-        license: "License"
+        license: "License",
+        specialties: "Specialties",
+        reviews: "Reviews",
+        verified: "Verified",
+        works: "works"
       }
     }
   };
@@ -154,10 +191,56 @@ export default function RoleLogin() {
     }, 3000);
   };
 
+  // Handle expertise selection
+  const handleExpertiseSelect = (expertise) => {
+    if (isRegister) {
+      setRegisterData({ ...registerData, expertise });
+    } else {
+      setFormData({ ...formData, [rolesConfig[role].fieldMapping.expertise]: expertise });
+    }
+    setShowExpertiseDropdown(false);
+  };
+
+  // Handle profile image selection during registration
+  const handleRegisterProfileImage = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size should be less than 5MB');
+      return;
+    }
+
+    setRegisterData({ ...registerData, profileImage: file });
+  };
+
+  // Remove profile image during registration
+  const removeRegisterProfileImage = () => {
+    setRegisterData({ ...registerData, profileImage: null });
+    if (registerProfileInputRef.current) {
+      registerProfileInputRef.current.value = '';
+    }
+  };
+
   // Check for existing session on component mount
   useEffect(() => {
     checkExistingSession();
+    initializeStorageBuckets();
   }, []);
+
+  // Load work images when user data is available
+  useEffect(() => {
+    if (userData) {
+      loadWorkImages();
+    }
+  }, [userData]);
 
   // Check if user is already logged in
   const checkExistingSession = async () => {
@@ -178,6 +261,34 @@ export default function RoleLogin() {
     }
   };
 
+  // Utility function to check and create buckets if needed
+  const initializeStorageBuckets = async () => {
+    try {
+      const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+      
+      if (listError) {
+        console.error('Error listing buckets:', listError);
+        return;
+      }
+
+      console.log('Available buckets:', buckets);
+      
+      const requiredBuckets = ['partner-profile', 'my-work'];
+      
+      for (const bucketName of requiredBuckets) {
+        const bucketExists = buckets.some(bucket => bucket.name === bucketName);
+        
+        if (!bucketExists) {
+          console.warn(`Bucket '${bucketName}' doesn't exist. Please create it in Supabase Dashboard.`);
+        } else {
+          console.log(`Bucket '${bucketName}' exists and is accessible`);
+        }
+      }
+    } catch (error) {
+      console.error('Error initializing storage buckets:', error);
+    }
+  };
+
   // Save session to localStorage
   const saveSession = (userData, role) => {
     localStorage.setItem('buildmaster_userData', JSON.stringify(userData));
@@ -195,13 +306,293 @@ export default function RoleLogin() {
     setUserData(null);
     setFormData({});
     setEditMode(false);
+    setWorkImages([]);
     clearSession();
+  };
+
+  // Load work images from database
+  const loadWorkImages = async () => {
+    if (!userData) return;
+
+    try {
+      const roleConfig = rolesConfig[role];
+      const map = roleConfig.fieldMapping;
+      
+      console.log('Loading work images for user:', userData.id);
+      console.log('Works field data:', userData[map.works]);
+      
+      // Check if works data exists in user data
+      if (userData[map.works] && Array.isArray(userData[map.works])) {
+        const validImages = userData[map.works].filter(url => 
+          url && typeof url === 'string' && url.trim() !== '' && url.startsWith('http')
+        );
+        console.log('Valid work images found:', validImages);
+        setWorkImages(validImages);
+      } else {
+        // Initialize empty works array if not exists
+        console.log('No work images found, initializing empty array');
+        setWorkImages([]);
+      }
+    } catch (error) {
+      console.error('Error loading work images:', error);
+      setWorkImages([]);
+    }
+  };
+
+  // --- PROFILE IMAGE UPLOAD HANDLER ---
+  const handleProfileImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setLoading(true);
+    
+    try {
+      const roleConfig = rolesConfig[role];
+      const map = roleConfig.fieldMapping;
+      
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image size should be less than 5MB');
+        return;
+      }
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `profile_${role.toLowerCase()}_${userData.id}_${Date.now()}.${fileExt}`;
+      const filePath = `profile-pictures/${fileName}`;
+
+      console.log('Uploading profile image to:', filePath);
+
+      // Upload to partner-profile bucket
+      const { error: uploadError } = await supabase.storage
+        .from('partner-profile')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error('Profile upload error:', uploadError);
+        throw uploadError;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('partner-profile')
+        .getPublicUrl(filePath);
+
+      console.log('Profile image uploaded successfully:', publicUrl);
+
+      const updatedFormData = { 
+        ...formData, 
+        [map.image]: publicUrl 
+      };
+      
+      setFormData(updatedFormData);
+
+      // Update database
+      const { error: updateError } = await supabase
+        .from(roleConfig.table)
+        .update({ [map.image]: publicUrl })
+        .eq("id", userData.id);
+
+      if (updateError) throw updateError;
+
+      const updatedUserData = { ...userData, [map.image]: publicUrl };
+      setUserData(updatedUserData);
+      saveSession(updatedUserData, role);
+
+      showSuccessAnimation("Profile picture updated successfully!");
+
+    } catch (err) {
+      console.error("Profile image upload error:", err);
+      alert("Profile image upload failed: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- WORK IMAGE UPLOAD HANDLER (FIXED) ---
+  const handleWorkImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+
+    setUploadingWork(true);
+    
+    try {
+      const roleConfig = rolesConfig[role];
+      const map = roleConfig.fieldMapping;
+
+      const uploadedUrls = [];
+
+      for (const file of files) {
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          alert(`Skipping ${file.name}: Please select image files only`);
+          continue;
+        }
+
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          alert(`Skipping ${file.name}: Image size should be less than 5MB`);
+          continue;
+        }
+
+        const fileExt = file.name.split('.').pop();
+        const fileName = `work_${role.toLowerCase()}_${userData.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+        
+        // Use partner-profile bucket for work images
+        const filePath = `work-images/${fileName}`;
+        const bucketName = 'partner-profile';
+        
+        console.log(`Uploading work image to: ${bucketName}/${filePath}`);
+
+        const { error: uploadError } = await supabase.storage
+          .from(bucketName)
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) {
+          console.error('Upload error for file:', file.name, uploadError);
+          continue;
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from(bucketName)
+          .getPublicUrl(filePath);
+
+        console.log(`Work image uploaded successfully:`, publicUrl);
+        uploadedUrls.push(publicUrl);
+      }
+
+      if (uploadedUrls.length > 0) {
+        // Get current works array from database to ensure we have the latest data
+        const { data: currentUserData, error: fetchError } = await supabase
+          .from(roleConfig.table)
+          .select(map.works)
+          .eq("id", userData.id)
+          .single();
+
+        if (fetchError) {
+          console.error('Error fetching current works:', fetchError);
+          throw fetchError;
+        }
+
+        const currentWorks = currentUserData[map.works] || [];
+        const updatedWorks = [...currentWorks, ...uploadedUrls];
+        
+        console.log('Updating works array in database:', updatedWorks);
+
+        // Update database with new works array
+        const { error: updateError } = await supabase
+          .from(roleConfig.table)
+          .update({ [map.works]: updatedWorks })
+          .eq("id", userData.id);
+
+        if (updateError) {
+          console.error('Database update error:', updateError);
+          throw updateError;
+        }
+
+        // Update local state
+        const updatedUserData = { 
+          ...userData, 
+          [map.works]: updatedWorks 
+        };
+        
+        setUserData(updatedUserData);
+        setFormData(updatedUserData);
+        setWorkImages(updatedWorks);
+        saveSession(updatedUserData, role);
+
+        showSuccessAnimation(`${uploadedUrls.length} work image(s) uploaded successfully!`);
+      } else {
+        alert('No images were uploaded. Please check file types and sizes.');
+      }
+
+    } catch (err) {
+      console.error("Work image upload error:", err);
+      alert("Work image upload failed: " + (err.message || 'Unknown error.'));
+    } finally {
+      setUploadingWork(false);
+      // Reset file input
+      if (workFileInputRef.current) {
+        workFileInputRef.current.value = '';
+      }
+    }
+  };
+
+  // --- DELETE WORK IMAGE HANDLER (FIXED) ---
+  const handleDeleteWorkImage = async (imageUrl) => {
+    if (!confirm('Are you sure you want to delete this work image?')) return;
+
+    try {
+      const roleConfig = rolesConfig[role];
+      const map = roleConfig.fieldMapping;
+
+      console.log('Deleting work image:', imageUrl);
+
+      // Extract file path from URL
+      const urlParts = imageUrl.split('/');
+      const fileName = urlParts[urlParts.length - 1];
+      const filePath = `work-images/${fileName}`;
+
+      console.log('File path to delete:', filePath);
+
+      // Delete from storage - only from partner-profile bucket
+      const { error: deleteError } = await supabase.storage
+        .from('partner-profile')
+        .remove([filePath]);
+
+      if (deleteError) {
+        console.warn('Could not delete file from storage:', deleteError);
+        // Continue with database update even if file deletion fails
+      }
+
+      // Update works array in database
+      const updatedWorks = workImages.filter(img => img !== imageUrl);
+      
+      console.log('Updating works array after deletion:', updatedWorks);
+
+      const { error: updateError } = await supabase
+        .from(roleConfig.table)
+        .update({ [map.works]: updatedWorks })
+        .eq("id", userData.id);
+
+      if (updateError) throw updateError;
+
+      // Update local state
+      const updatedUserData = { 
+        ...userData, 
+        [map.works]: updatedWorks 
+      };
+      
+      setUserData(updatedUserData);
+      setFormData(updatedUserData);
+      setWorkImages(updatedWorks);
+      saveSession(updatedUserData, role);
+
+      showSuccessAnimation("Work image deleted successfully!");
+
+    } catch (err) {
+      console.error("Work image delete error:", err);
+      alert("Failed to delete work image: " + err.message);
+    }
   };
 
   // --- REGISTER HANDLER ---
   const handleRegister = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setUploadingProfile(true);
 
     try {
       const roleConfig = rolesConfig[role];
@@ -222,6 +613,34 @@ export default function RoleLogin() {
         return;
       }
 
+      let profileImageUrl = null;
+
+      // Upload profile image if provided
+      if (registerData.profileImage) {
+        const file = registerData.profileImage;
+        const fileExt = file.name.split('.').pop();
+        const fileName = `profile_${role.toLowerCase()}_${Date.now()}.${fileExt}`;
+        const filePath = `profile-pictures/${fileName}`;
+
+        console.log('Uploading profile image during registration:', filePath);
+
+        const { error: uploadError } = await supabase.storage
+          .from('partner-profile')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('partner-profile')
+          .getPublicUrl(filePath);
+
+        profileImageUrl = publicUrl;
+        console.log('Profile image uploaded during registration:', profileImageUrl);
+      }
+
       // Prepare registration data based on role with required fields
       const registrationData = {
         [map.phone]: phone,
@@ -231,9 +650,13 @@ export default function RoleLogin() {
         [map.about]: registerData.about || "Professional in the construction industry",
         is_active: true,
         rating: 0,
+        // Initialize empty works array
+        [map.works]: [],
+        // Add profile image if uploaded
+        ...(profileImageUrl && { [map.image]: profileImageUrl }),
         // Add role-specific required fields
         ...(role === "Contractor" && { 
-          expertise: registerData.expertise || "General Construction",
+          expertise: registerData.expertise || "POP",
           site_completed: 0,
           team_size: 1
         }),
@@ -273,7 +696,15 @@ export default function RoleLogin() {
       if (data) {
         showSuccessAnimation("Registration successful! Your account will be activated soon.");
         setIsRegister(false);
-        setRegisterData({ name: "", email: "", location: "", experience: "", about: "", expertise: "" });
+        setRegisterData({ 
+          name: "", 
+          email: "", 
+          location: "", 
+          experience: "", 
+          about: "", 
+          expertise: "",
+          profileImage: null 
+        });
         setPhone("");
       }
     } catch (err) {
@@ -281,6 +712,7 @@ export default function RoleLogin() {
       console.error("Registration error:", err);
     } finally {
       setLoading(false);
+      setUploadingProfile(false);
     }
   };
 
@@ -304,10 +736,12 @@ export default function RoleLogin() {
       if (error) throw error;
 
       if (data) {
-        setUserData(data);
-        setFormData(data);
-        saveSession(data, role);
-        showSuccessAnimation(`Welcome back, ${data[map.name]}!`);
+        // Remove password from user data before storing
+        const { [map.password]: _, ...userDataWithoutPassword } = data;
+        setUserData(userDataWithoutPassword);
+        setFormData(userDataWithoutPassword);
+        saveSession(userDataWithoutPassword, role);
+        showSuccessAnimation(`Welcome back, ${userDataWithoutPassword[map.name]}!`);
       } else {
         alert("Invalid phone or password.");
       }
@@ -318,69 +752,28 @@ export default function RoleLogin() {
     }
   };
 
-  // --- IMAGE UPLOAD HANDLER ---
-  const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    setLoading(true);
-    
-    try {
-      const roleConfig = rolesConfig[role];
-      const map = roleConfig.fieldMapping;
-      
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${role.toLowerCase()}_${userData.id}_${Date.now()}.${fileExt}`;
-      const filePath = `profile-pictures/${fileName}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('partner-profile')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('partner-profile')
-        .getPublicUrl(filePath);
-
-      const updatedFormData = { 
-        ...formData, 
-        [map.image]: publicUrl 
-      };
-      
-      setFormData(updatedFormData);
-
-      const { error: updateError } = await supabase
-        .from(roleConfig.table)
-        .update({ [map.image]: publicUrl })
-        .eq("id", userData.id);
-
-      if (updateError) throw updateError;
-
-      const updatedUserData = { ...userData, [map.image]: publicUrl };
-      setUserData(updatedUserData);
-      saveSession(updatedUserData, role);
-
-      showSuccessAnimation("Profile picture updated successfully!");
-
-    } catch (err) {
-      alert("Image upload failed: " + err.message);
-      console.error("Upload error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // --- UPDATE HANDLER ---
   const handleUpdate = async () => {
     try {
       const roleConfig = rolesConfig[role];
-      const { error } = await supabase.from(roleConfig.table).update(formData).eq("id", userData.id);
+      const map = roleConfig.fieldMapping;
+      
+      // Remove password field from update data if it exists
+      const updateData = { ...formData };
+      if (updateData[map.password]) {
+        delete updateData[map.password];
+      }
+      
+      const { error } = await supabase
+        .from(roleConfig.table)
+        .update(updateData)
+        .eq("id", userData.id);
+
       if (error) throw error;
 
-      setUserData(formData);
+      setUserData(updateData);
       setEditMode(false);
-      saveSession(formData, role);
+      saveSession(updateData, role);
       showSuccessAnimation("Profile updated successfully!");
     } catch (err) {
       alert("Update failed: " + err.message);
@@ -498,6 +891,47 @@ export default function RoleLogin() {
                           <p className="text-gray-800 font-medium text-sm sm:text-base">{userData[map.experience] || 'Not provided'}</p>
                         </div>
                       </div>
+
+                      {/* Role-specific additional fields */}
+                      {role === "Contractor" && userData[map.expertise] && (
+                        <div className="flex items-center space-x-3">
+                          <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
+                          <div>
+                            <p className="text-xs sm:text-sm text-gray-600">Expertise</p>
+                            <p className="text-gray-800 font-medium text-sm sm:text-base">{userData[map.expertise]}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {role === "Engineer" && userData[map.qualification] && (
+                        <div className="flex items-center space-x-3">
+                          <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
+                          <div>
+                            <p className="text-xs sm:text-sm text-gray-600">Qualification</p>
+                            <p className="text-gray-800 font-medium text-sm sm:text-base">{userData[map.qualification]}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {role === "Builder" && userData[map.license] && (
+                        <div className="flex items-center space-x-3">
+                          <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
+                          <div>
+                            <p className="text-xs sm:text-sm text-gray-600">License</p>
+                            <p className="text-gray-800 font-medium text-sm sm:text-base">{userData[map.license]}</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {role === "Labours" && userData[map.rate] && (
+                        <div className="flex items-center space-x-3">
+                          <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
+                          <div>
+                            <p className="text-xs sm:text-sm text-gray-600">Daily Rate</p>
+                            <p className="text-gray-800 font-medium text-sm sm:text-base">₹{userData[map.rate]}</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {userData[map.about] && (
@@ -548,6 +982,44 @@ export default function RoleLogin() {
                           />
                         </div>
                       )}
+                      {role === "Contractor" && (
+                        <div className="relative">
+                          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Expertise</label>
+                          <button
+                            type="button"
+                            onClick={() => setShowExpertiseDropdown(!showExpertiseDropdown)}
+                            className="w-full flex items-center justify-between border border-gray-300 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-gray-800 text-left bg-white"
+                          >
+                            <span>{formData[map.expertise] || "Select expertise"}</span>
+                            <ChevronDown size={16} className={`transition-transform ${showExpertiseDropdown ? 'rotate-180' : ''}`} />
+                          </button>
+                          {showExpertiseDropdown && (
+                            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+                              {contractorExpertiseOptions.map((option) => (
+                                <button
+                                  key={option}
+                                  type="button"
+                                  onClick={() => handleExpertiseSelect(option)}
+                                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-left hover:bg-blue-50 transition text-gray-800 text-sm sm:text-base"
+                                >
+                                  {option}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {role === "Engineer" && (
+                        <div>
+                          <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Qualification</label>
+                          <input
+                            className="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-gray-800 text-sm sm:text-base"
+                            value={formData[map.qualification] || ""}
+                            onChange={(e) => setFormData({ ...formData, [map.qualification]: e.target.value })}
+                            placeholder="Qualification"
+                          />
+                        </div>
+                      )}
                     </div>
                     <div>
                       <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1">About</label>
@@ -577,6 +1049,66 @@ export default function RoleLogin() {
                   </div>
                 )}
               </div>
+
+              {/* Work Images Section */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 mt-4 sm:mt-6">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 sm:mb-6">
+                  <h2 className="text-lg sm:text-xl font-bold text-gray-800">My Work Portfolio</h2>
+                  <button
+                    onClick={() => workFileInputRef.current.click()}
+                    disabled={uploadingWork}
+                    className="flex items-center space-x-2 bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 text-sm sm:text-base"
+                  >
+                    <Plus size={14} className="sm:w-4 sm:h-4" />
+                    <span>{uploadingWork ? 'Uploading...' : 'Add Work Images'}</span>
+                  </button>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    ref={workFileInputRef}
+                    onChange={handleWorkImageUpload}
+                    multiple
+                    className="hidden"
+                  />
+                </div>
+
+                {workImages.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                    {workImages.map((imageUrl, index) => (
+                      <div key={index} className="relative group">
+                        <img
+                          src={imageUrl}
+                          alt={`Work ${index + 1}`}
+                          className="w-full h-24 sm:h-32 object-cover rounded-lg border border-gray-200"
+                          onError={(e) => {
+                            console.error(`Failed to load work image: ${imageUrl}`);
+                            e.target.style.display = 'none';
+                          }}
+                        />
+                        <button
+                          onClick={() => handleDeleteWorkImage(imageUrl)}
+                          className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 sm:py-12">
+                    <ImageIcon className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-3 sm:mb-4" />
+                    <p className="text-gray-600 text-sm sm:text-base">No work images uploaded yet</p>
+                    <p className="text-gray-500 text-xs sm:text-sm mt-1">Upload images of your completed projects</p>
+                  </div>
+                )}
+
+                {uploadingWork && (
+                  <div className="text-center py-4">
+                    <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                    <p className="text-gray-600 text-sm mt-2">Uploading work images...</p>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Sidebar */}
@@ -591,7 +1123,8 @@ export default function RoleLogin() {
                   />
                   <button
                     onClick={() => fileInputRef.current.click()}
-                    className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 bg-blue-600 text-white p-1.5 sm:p-2 rounded-full hover:bg-blue-700 transition shadow-lg"
+                    disabled={loading}
+                    className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 bg-blue-600 text-white p-1.5 sm:p-2 rounded-full hover:bg-blue-700 transition shadow-lg disabled:opacity-50"
                   >
                     <Camera size={12} className="sm:w-4 sm:h-4" />
                   </button>
@@ -599,10 +1132,16 @@ export default function RoleLogin() {
                     type="file"
                     accept="image/*"
                     ref={fileInputRef}
-                    onChange={handleImageUpload}
+                    onChange={handleProfileImageUpload}
                     className="hidden"
                   />
                 </div>
+                
+                {loading && (
+                  <div className="mt-2">
+                    <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                  </div>
+                )}
                 
                 {userData[map.rating] && (
                   <div className="flex items-center justify-center space-x-1 mt-2 sm:mt-3">
@@ -623,6 +1162,10 @@ export default function RoleLogin() {
                       <span className="font-semibold text-blue-600 text-sm sm:text-base">{userData[map.projects]}</span>
                     </div>
                   )}
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600 text-xs sm:text-sm">Work Images</span>
+                    <span className="font-semibold text-blue-600 text-sm sm:text-base">{workImages.length}</span>
+                  </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600 text-xs sm:text-sm">Status</span>
                     <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">Active</span>
@@ -731,6 +1274,65 @@ export default function RoleLogin() {
             {/* Register Form */}
             {isRegister ? (
               <form onSubmit={handleRegister} className="space-y-3 sm:space-y-4">
+                {/* Profile Picture Upload Section */}
+                <div className="text-center">
+                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2 sm:mb-3">
+                    Profile Picture (Optional)
+                  </label>
+                  <div className="flex flex-col items-center space-y-3">
+                    <div className="relative">
+                      {registerData.profileImage ? (
+                        <>
+                          <img
+                            src={URL.createObjectURL(registerData.profileImage)}
+                            alt="Profile Preview"
+                            className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl object-cover border-2 border-blue-500 shadow-md"
+                          />
+                          <button
+                            type="button"
+                            onClick={removeRegisterProfileImage}
+                            className="absolute -top-2 -right-2 bg-red-600 text-white p-1 rounded-full hover:bg-red-700 transition shadow-lg"
+                          >
+                            <X size={12} />
+                          </button>
+                        </>
+                      ) : (
+                        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
+                          <Camera className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => registerProfileInputRef.current.click()}
+                        className="flex items-center space-x-1 bg-blue-600 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm hover:bg-blue-700 transition"
+                      >
+                        <Camera size={12} className="sm:w-4 sm:h-4" />
+                        <span>{registerData.profileImage ? 'Change' : 'Upload'}</span>
+                      </button>
+                      {registerData.profileImage && (
+                        <button
+                          type="button"
+                          onClick={removeRegisterProfileImage}
+                          className="flex items-center space-x-1 bg-red-600 text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm hover:bg-red-700 transition"
+                        >
+                          <Trash2 size={12} className="sm:w-4 sm:h-4" />
+                          <span>Remove</span>
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      ref={registerProfileInputRef}
+                      onChange={handleRegisterProfileImage}
+                      className="hidden"
+                    />
+                    <p className="text-xs text-gray-500">Max 5MB • JPG, PNG, WebP</p>
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
                     Full Name *
@@ -762,19 +1364,53 @@ export default function RoleLogin() {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
-                    Expertise/Specialization *
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g., Plumbing, Electrical, Masonry"
-                    value={registerData.expertise}
-                    onChange={(e) => setRegisterData({...registerData, expertise: e.target.value})}
-                    required
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-gray-800 placeholder-gray-500 text-sm sm:text-base"
-                  />
-                </div>
+                {/* Contractor Expertise Dropdown */}
+                {role === "Contractor" && (
+                  <div className="relative">
+                    <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
+                      Expertise *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowExpertiseDropdown(!showExpertiseDropdown)}
+                      className="w-full flex items-center justify-between border border-gray-300 rounded-lg px-3 sm:px-4 py-2.5 sm:py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-gray-800 text-left bg-white"
+                    >
+                      <span>{registerData.expertise || "Select your expertise"}</span>
+                      <ChevronDown size={16} className={`transition-transform ${showExpertiseDropdown ? 'rotate-180' : ''}`} />
+                    </button>
+                    {showExpertiseDropdown && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+                        {contractorExpertiseOptions.map((option) => (
+                          <button
+                            key={option}
+                            type="button"
+                            onClick={() => handleExpertiseSelect(option)}
+                            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-left hover:bg-blue-50 transition text-gray-800 text-sm sm:text-base"
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Other roles still use text input for expertise */}
+                {role !== "Contractor" && (
+                  <div>
+                    <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
+                      {role === "Engineer" ? "Specialization *" : "Expertise/Specialization *"}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder={role === "Engineer" ? "e.g., Structural Engineering" : "e.g., General Construction"}
+                      value={registerData.expertise}
+                      onChange={(e) => setRegisterData({...registerData, expertise: e.target.value})}
+                      required
+                      className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition text-gray-800 placeholder-gray-500 text-sm sm:text-base"
+                    />
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1 sm:mb-2">
@@ -838,7 +1474,9 @@ export default function RoleLogin() {
                   {loading ? (
                     <div className="flex items-center justify-center space-x-2">
                       <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <span className="text-xs sm:text-sm">Registering...</span>
+                      <span className="text-xs sm:text-sm">
+                        {uploadingProfile ? 'Uploading Profile...' : 'Registering...'}
+                      </span>
                     </div>
                   ) : (
                     `Register as ${role}`

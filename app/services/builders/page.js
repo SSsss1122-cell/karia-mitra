@@ -21,7 +21,9 @@ import {
   MessageCircle,
   Users,
   Home,
-  Check
+  Check,
+  Image as ImageIcon,
+  Camera
 } from 'lucide-react';
 
 export default function BuildersPage() {
@@ -30,6 +32,7 @@ export default function BuildersPage() {
   const [selectedBuilder, setSelectedBuilder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [builderWorkImages, setBuilderWorkImages] = useState({});
 
   // ✅ Mediator contact information
   const mediatorNumber = "9480072737";
@@ -48,7 +51,7 @@ export default function BuildersPage() {
 
         // If table is empty, use dummy data
         if (!data || data.length === 0) {
-          setBuilders([
+          const dummyBuilders = [
             {
               id: 1,
               Name: 'Ravi Construction Co.',
@@ -97,7 +100,8 @@ export default function BuildersPage() {
               Email: 'info@greenbuild.com',
               About: 'Leading builder in eco-friendly and sustainable construction projects. We believe in building a better future through green construction practices.'
             }
-          ]);
+          ];
+          setBuilders(dummyBuilders);
         } else {
           setBuilders(data);
         }
@@ -111,6 +115,149 @@ export default function BuildersPage() {
     fetchBuilders();
   }, []);
 
+  // ✅ Fetch work images when builder is selected
+  useEffect(() => {
+    if (selectedBuilder) {
+      fetchBuilderWorkImages(selectedBuilder.id);
+    }
+  }, [selectedBuilder]);
+
+  // ✅ Function to fetch work images from partner-profile/work-images folder
+  const fetchBuilderWorkImages = async (builderId) => {
+    try {
+      console.log(`🔍 Fetching work images for builder ${builderId} from partner-profile/work-images...`);
+
+      let allWorkImages = [];
+
+      // 1. First check database works field
+      const dbImages = await fetchFromDatabase(builderId);
+      if (dbImages.length > 0) {
+        console.log(`📁 Found ${dbImages.length} images in database works field`);
+        allWorkImages = [...allWorkImages, ...dbImages];
+      }
+
+      // 2. Check partner-profile bucket work-images folder
+      const storageImages = await fetchFromPartnerProfileWorkImages(builderId);
+      if (storageImages.length > 0) {
+        console.log(`🪣 Found ${storageImages.length} images in partner-profile/work-images`);
+        allWorkImages = [...allWorkImages, ...storageImages];
+      }
+
+      console.log(`✅ Total work images found: ${allWorkImages.length}`);
+
+      // Update state with ALL found images
+      setBuilderWorkImages(prev => ({
+        ...prev,
+        [builderId]: allWorkImages
+      }));
+
+    } catch (err) {
+      console.error('❌ Error fetching work images:', err);
+      setBuilderWorkImages(prev => ({
+        ...prev,
+        [builderId]: []
+      }));
+    }
+  };
+
+  // ✅ Check database works field
+  const fetchFromDatabase = async (builderId) => {
+    try {
+      const { data, error } = await supabase
+        .from('Builder')
+        .select('works')
+        .eq('id', builderId)
+        .single();
+
+      if (error) throw error;
+
+      if (data.works && Array.isArray(data.works) && data.works.length > 0) {
+        // Filter out empty or invalid URLs
+        const validImages = data.works.filter(url => 
+          url && typeof url === 'string' && url.trim() !== '' && url.startsWith('http')
+        );
+        return validImages;
+      }
+      return [];
+    } catch (err) {
+      console.error('Error fetching from database:', err);
+      return [];
+    }
+  };
+
+  // ✅ SPECIFICALLY check partner-profile/work-images folder
+  const fetchFromPartnerProfileWorkImages = async (builderId) => {
+    try {
+      console.log(`📂 Checking partner-profile bucket, work-images folder for builder ${builderId}...`);
+      
+      // List files specifically from the work-images folder in partner-profile bucket
+      const { data: files, error: listError } = await supabase.storage
+        .from('partner-profile')
+        .list('work-images', {
+          limit: 1000,
+          offset: 0,
+          sortBy: { column: 'name', order: 'desc' }
+        });
+
+      if (listError) {
+        console.error('❌ Error listing work-images folder:', listError);
+        return [];
+      }
+
+      console.log(`📄 Found ${files?.length || 0} files in work-images folder`);
+      
+      if (files && files.length > 0) {
+        // Log all files for debugging
+        console.log('All files in work-images folder:', files.map(f => f.name));
+        
+        // Look for files that belong to this builder
+        // Builders are stored with pattern: work_builder_{builderId}_{timestamp}
+        const builderFiles = files.filter(file => {
+          const fileName = file.name.toLowerCase();
+          
+          // Pattern for builder work images
+          const builderPatterns = [
+            `work_builder_${builderId}_`,
+            `builder_${builderId}_`,
+            `work_builder${builderId}_`,
+            `builder${builderId}_`
+          ];
+
+          const isBuilderFile = builderPatterns.some(pattern => 
+            fileName.includes(pattern.toLowerCase())
+          );
+
+          if (isBuilderFile) {
+            console.log(`✅ Found builder work image: ${file.name}`);
+          }
+
+          return isBuilderFile;
+        });
+
+        console.log(`🎯 Found ${builderFiles.length} work images for builder ${builderId}`);
+
+        // Get public URLs for matching files
+        const workImageUrls = [];
+        for (const file of builderFiles) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('partner-profile')
+            .getPublicUrl(`work-images/${file.name}`);
+
+          console.log(`🔗 Work image URL: ${publicUrl}`);
+          workImageUrls.push(publicUrl);
+        }
+
+        return workImageUrls;
+      }
+
+      return [];
+
+    } catch (err) {
+      console.error('❌ Error in fetchFromPartnerProfileWorkImages:', err);
+      return [];
+    }
+  };
+
   // ✅ WhatsApp booking function
   const handleWhatsAppBooking = (builder) => {
     const message = `Hi Karia Mitra, I want to book ${builder.Name} (Builder). Please share their details and help me connect with them.`;
@@ -121,6 +268,11 @@ export default function BuildersPage() {
   // ✅ Call function - just opens dialer without number
   const handleCall = () => {
     window.location.href = 'tel:';
+  };
+
+  // ✅ Check if builder has work images
+  const hasWorkImages = (builderId) => {
+    return builderWorkImages[builderId] && builderWorkImages[builderId].length > 0;
   };
 
   if (loading) {
@@ -220,7 +372,7 @@ export default function BuildersPage() {
       </div>
 
       {/* Builder List - Mobile First Design */}
-      <div className="px-3 py-4 pb-24"> {/* Reduced bottom padding */}
+      <div className="px-3 py-4 pb-24">
         <div className="mb-4">
           <h2 className="text-base font-bold text-gray-900 mb-1">
             Available Builders
@@ -254,9 +406,21 @@ export default function BuildersPage() {
                   </div>
                   
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-gray-900 text-sm truncate">
-                      {builder.Name}
-                    </h3>
+                    <div className="flex items-start justify-between">
+                      <h3 className="font-bold text-gray-900 text-sm truncate">
+                        {builder.Name}
+                      </h3>
+                      {/* Work Images Badge */}
+                      {hasWorkImages(builder.id) && (
+                        <div className="flex items-center space-x-1 bg-blue-50 px-2 py-1 rounded-full ml-2">
+                          <Camera className="w-3 h-3 text-blue-600" />
+                          <span className="text-blue-600 text-xs font-medium">
+                            {builderWorkImages[builder.id]?.length || 0}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    
                     <p className="text-gray-500 text-xs truncate">
                       {builder.Specialties?.[0] || 'Construction Builder'}
                     </p>
@@ -384,8 +548,49 @@ export default function BuildersPage() {
             </div>
 
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto pb-28 sm:pb-4"> {/* Increased bottom padding for mobile */}
+            <div className="flex-1 overflow-y-auto pb-28 sm:pb-4">
               <div className="p-6 space-y-6">
+                {/* Work Images Section */}
+                {hasWorkImages(selectedBuilder.id) && (
+                  <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl p-5 border border-orange-100">
+                    <h3 className="font-bold text-gray-900 text-lg mb-3 flex items-center">
+                      <Camera className="w-5 h-5 text-orange-600 mr-2" />
+                      Work Portfolio
+                      <span className="ml-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full">
+                        {builderWorkImages[selectedBuilder.id]?.length || 0} images
+                      </span>
+                    </h3>
+                    <div className="grid grid-cols-3 gap-2">
+                      {builderWorkImages[selectedBuilder.id]?.slice(0, 6).map((imageUrl, index) => (
+                        <div key={index} className="relative aspect-square rounded-lg overflow-hidden border border-orange-200">
+                          <img
+                            src={imageUrl}
+                            alt={`Work ${index + 1}`}
+                            className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
+                            onError={(e) => {
+                              console.error(`Failed to load image: ${imageUrl}`);
+                              e.target.style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      ))}
+                      {builderWorkImages[selectedBuilder.id]?.length > 6 && (
+                        <div className="relative aspect-square rounded-lg overflow-hidden border border-orange-200 bg-orange-100 flex items-center justify-center">
+                          <div className="text-center">
+                            <span className="text-orange-600 font-bold text-lg">
+                              +{builderWorkImages[selectedBuilder.id].length - 6}
+                            </span>
+                            <p className="text-orange-500 text-xs">More</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-orange-600 text-xs mt-2 text-center">
+                      View their completed projects and work quality
+                    </p>
+                  </div>
+                )}
+
                 {/* Specialties Section */}
                 {selectedBuilder.Specialties && selectedBuilder.Specialties.length > 0 && (
                   <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-5 border border-blue-100">

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Search, Building2, Home, Settings, User, Handshake } from 'lucide-react';
+import { Search, Home, User, Handshake } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 export default function LayoutWithNav({ children }) {
@@ -249,19 +249,25 @@ export default function LayoutWithNav({ children }) {
         <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-lg border-b border-gray-200/50 pt-safe">
           <div className="px-4 sm:px-6 lg:px-8 py-3">
             <div className="max-w-7xl mx-auto flex items-center justify-between">
-              {/* Logo */}
+              {/* Logo with Karia Mitra name - Now using image from public folder */}
               <div
-                className="flex items-center space-x-3 flex-shrink-0 cursor-pointer"
+                className="flex items-center flex-shrink-0 cursor-pointer space-x-3"
                 onClick={() => router.push('/')}
               >
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-[#0e1e55] to-[#1e3a8a] rounded-lg flex items-center justify-center shadow-lg">
-                  <Building2 className="text-white" size={18} />
-                </div>
-                <div>
-                  <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-[#0e1e55] to-[#1e3a8a] bg-clip-text text-transparent">
-                    Karia Mitra
-                  </h1>
-                  <p className="text-gray-500 text-xs hidden sm:block">Construction Pro</p>
+                <img 
+                  src="/images/logo.png" 
+                  alt="Karia Mitra Logo" 
+                  className="w-12 h-12 object-contain"
+                  onError={(e) => {
+                    // Fallback if logo image doesn't exist
+                    console.error('Logo image not found, using fallback');
+                    e.target.style.display = 'none';
+                    // You could add a fallback div here if needed
+                  }}
+                />
+                <div className="flex flex-col">
+                  <span className="text-xl font-bold text-gray-900 leading-tight">Karia Mitra</span>
+                  <span className="text-xs text-gray-600 leading-tight">Build Smart</span>
                 </div>
               </div>
 
@@ -288,7 +294,7 @@ export default function LayoutWithNav({ children }) {
                       <img
                         src={getUserAvatar()}
                         alt="avatar"
-                        className="w-6 h-6 rounded-full border-2 border-white"
+                        className="w-8 h-8 rounded-full border-2 border-white"
                         onError={(e) => {
                           // Fallback if image fails to load (common in mobile)
                           const name = user.user_metadata?.name || user.email?.split('@')[0] || 'U';
@@ -312,7 +318,7 @@ export default function LayoutWithNav({ children }) {
                             <img
                               src={getUserAvatar()}
                               alt="avatar"
-                              className="w-12 h-12 rounded-full border-2 border-[#0e1e55]"
+                              className="w-16 h-16 rounded-full border-2 border-[#0e1e55]"
                               onError={(e) => {
                                 const name = user.user_metadata?.name || user.email?.split('@')[0] || 'U';
                                 e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0e1e55&color=fff&size=96`;
@@ -420,21 +426,20 @@ export default function LayoutWithNav({ children }) {
           </div>
         </header>
 
-        {/* Main Content - Adjusted for header and bottom nav */}
-        <main className="pt-16 pb-20 min-h-screen">
+        {/* Main Content - Increased bottom padding to avoid collision with bottom nav */}
+        <main className="pt-20 pb-32 min-h-screen safe-area-padding">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {children}
           </div>
         </main>
 
-        {/* Bottom Navigation - Reduced gap */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 z-50">
+        {/* Bottom Navigation - Enhanced with safe area support (Settings removed) */}
+        <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 z-50 pb-safe">
           <div className="flex items-center justify-around p-2">
             {[
-              { icon: <Home size={18} />, name: 'Home', path: '/' },
-              { icon: <Handshake size={18} />, name: 'Partner', path: '/partner' },
-              { icon: <User size={18} />, name: 'Profile', path: '/profile' },
-              { icon: <Settings size={18} />, name: 'Settings', path: '/settings' },
+              { icon: <Home size={20} />, name: 'Home', path: '/' },
+              { icon: <Handshake size={20} />, name: 'Partner', path: '/partner' },
+              { icon: <User size={20} />, name: 'Profile', path: '/profile' },
             ].map((item, index) => (
               <button
                 key={index}
@@ -445,7 +450,7 @@ export default function LayoutWithNav({ children }) {
                     : 'text-gray-600 hover:text-[#0e1e55]'
                 }`}
               >
-                <div className={`p-1 rounded-lg transition-colors ${
+                <div className={`p-2 rounded-lg transition-colors ${
                   pathname === item.path ? 'bg-[#0e1e55]/10' : ''
                 }`}>
                   {item.icon}
@@ -458,6 +463,19 @@ export default function LayoutWithNav({ children }) {
           </div>
         </nav>
       </div>
+
+      {/* Add CSS for safe areas */}
+      <style jsx>{`
+        .safe-area-padding {
+          padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
+        }
+        .pb-safe {
+          padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        .pt-safe {
+          padding-top: env(safe-area-inset-top, 0px);
+        }
+      `}</style>
     </div>
   );
 }
