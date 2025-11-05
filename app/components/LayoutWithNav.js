@@ -166,11 +166,17 @@ export default function LayoutWithNav({ children }) {
       const isCapacitor = typeof window !== 'undefined' && window.Capacitor;
       console.log('isCapacitor:', isCapacitor);
       
-      // Use a simpler approach - always use web flow for now
+      // ✅ FIX: Use different redirect URLs for web vs mobile
+      const redirectTo = isCapacitor 
+        ? 'kariamitra://auth/callback' // Mobile app
+        : `${window.location.origin}/auth/callback`; // Web
+
+      console.log('Redirect URL:', redirectTo);
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: 'kariamitra://auth/callback',
+          redirectTo: redirectTo,
           skipBrowserRedirect: isCapacitor
         }
       });
@@ -215,6 +221,19 @@ export default function LayoutWithNav({ children }) {
       console.error('Logout error:', error);
       alert('Logout failed: ' + error.message);
     }
+  };
+
+  // ✅ FIX: Get user avatar with proper fallback for mobile
+  const getUserAvatar = () => {
+    if (user?.user_metadata?.avatar_url) {
+      return user.user_metadata.avatar_url;
+    }
+    if (user?.email) {
+      // Generate a colorful placeholder based on email
+      const name = user.user_metadata?.name || user.email.split('@')[0];
+      return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0e1e55&color=fff&size=128`;
+    }
+    return null;
   };
 
   return (
@@ -264,105 +283,134 @@ export default function LayoutWithNav({ children }) {
                     onClick={() => setShowProfileMenu((prev) => !prev)}
                     className="flex items-center space-x-2 bg-gradient-to-r from-[#0e1e55] to-[#1e3a8a] rounded-xl px-3 py-2 shadow-lg hover:scale-105 transition-transform duration-300"
                   >
-                    {user && user.user_metadata?.avatar_url ? (
+                    {/* ✅ FIX: Avatar with proper fallback for mobile */}
+                    {user ? (
                       <img
-                        src={user.user_metadata.avatar_url}
+                        src={getUserAvatar()}
                         alt="avatar"
-                        className="w-6 h-6 rounded-full"
+                        className="w-6 h-6 rounded-full border-2 border-white"
+                        onError={(e) => {
+                          // Fallback if image fails to load (common in mobile)
+                          const name = user.user_metadata?.name || user.email?.split('@')[0] || 'U';
+                          e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0e1e55&color=fff&size=64`;
+                        }}
                       />
                     ) : (
                       <User className="text-white" size={16} />
                     )}
                     <span className="text-white font-medium text-sm hidden sm:block">
-                      {user ? user.user_metadata?.name?.split(' ')[0] || 'Account' : 'Profile'}
+                      {user ? user.user_metadata?.name?.split(' ')[0] || user.email?.split('@')[0] || 'Account' : 'Profile'}
                     </span>
                   </button>
 
                   {showProfileMenu && (
-                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 p-4 z-50">
+                    <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-lg border border-gray-200 p-4 z-50">
                       {user ? (
                         <div className="space-y-3 text-center">
-                          <div className="flex items-center justify-center space-x-2">
-                            {user.user_metadata?.avatar_url && (
-                              <img
-                                src={user.user_metadata.avatar_url}
-                                alt="avatar"
-                                className="w-10 h-10 rounded-full"
-                              />
-                            )}
-                            <div>
-                              <p className="text-sm font-medium text-gray-900">
-                                {user.user_metadata?.name || user.email}
+                          <div className="flex items-center justify-center space-x-3">
+                            {/* ✅ FIX: Avatar in profile menu with fallback */}
+                            <img
+                              src={getUserAvatar()}
+                              alt="avatar"
+                              className="w-12 h-12 rounded-full border-2 border-[#0e1e55]"
+                              onError={(e) => {
+                                const name = user.user_metadata?.name || user.email?.split('@')[0] || 'U';
+                                e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0e1e55&color=fff&size=96`;
+                              }}
+                            />
+                            <div className="text-left">
+                              <p className="text-sm font-bold text-gray-900 truncate max-w-[120px]">
+                                {user.user_metadata?.name || 'User'}
                               </p>
-                              <p className="text-xs text-gray-500">{user.email}</p>
+                              <p className="text-xs text-gray-600 truncate max-w-[120px]">{user.email}</p>
                             </div>
                           </div>
                           <button
                             onClick={handleLogout}
-                            className="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition"
+                            className="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-2 rounded-lg transition-all duration-200 text-sm"
                           >
                             Logout
                           </button>
                         </div>
                       ) : (
-                        <form onSubmit={handleAuth} className="space-y-3">
-                          <h3 className="text-center font-semibold text-gray-800 text-sm">
-                            {authMode === 'login'
-                              ? 'Login to your account'
-                              : 'Create an account'}
+                        <div className="space-y-3">
+                          {/* ✅ FIX: Visible text with proper contrast */}
+                          <h3 className="text-center text-base font-bold text-gray-900 mb-1">
+                            {authMode === 'login' ? 'Welcome Back' : 'Join Us'}
                           </h3>
-                          <input
-                            type="email"
-                            placeholder="Email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0e1e55]"
-                            required
-                          />
-                          <input
-                            type="password"
-                            placeholder="Password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0e1e55]"
-                            required
-                          />
+                          
+                          {/* Email Login Form */}
+                          <form onSubmit={handleAuth} className="space-y-3">
+                            <div>
+                              <input
+                                type="email"
+                                placeholder="Email address"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white placeholder-gray-500 outline-none focus:ring-2 focus:ring-[#0e1e55] focus:border-transparent"
+                                required
+                              />
+                            </div>
+                            
+                            <div>
+                              <input
+                                type="password"
+                                placeholder="Password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white placeholder-gray-500 outline-none focus:ring-2 focus:ring-[#0e1e55] focus:border-transparent"
+                                required
+                              />
+                            </div>
+                            
+                            <button
+                              type="submit"
+                              disabled={loading}
+                              className="w-full bg-gradient-to-r from-[#0e1e55] to-[#1e3a8a] text-white font-medium py-2 rounded-lg hover:opacity-90 transition disabled:opacity-50 text-sm"
+                            >
+                              {loading
+                                ? 'Please wait...'
+                                : authMode === 'login'
+                                ? 'Sign In'
+                                : 'Create Account'}
+                            </button>
+                          </form>
+
+                          {/* Divider */}
+                          <div className="flex items-center my-2">
+                            <div className="flex-1 border-t border-gray-300"></div>
+                            <span className="px-2 text-xs text-gray-500">OR</span>
+                            <div className="flex-1 border-t border-gray-300"></div>
+                          </div>
+
+                          {/* Google Login Button */}
                           <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full bg-gradient-to-r from-[#0e1e55] to-[#1e3a8a] text-white py-2 rounded-lg hover:opacity-90 transition disabled:opacity-50"
-                          >
-                            {loading
-                              ? 'Please wait...'
-                              : authMode === 'login'
-                              ? 'Login'
-                              : 'Sign Up'}
-                          </button>
-                          <button
-                            type="button"
                             onClick={handleGoogleLogin}
-                            className="w-full border border-gray-300 rounded-lg py-2 flex items-center justify-center gap-2 hover:bg-gray-50 transition"
+                            className="w-full border border-gray-300 rounded-lg py-2 flex items-center justify-center gap-2 hover:bg-gray-50 transition-all duration-200 text-sm"
                           >
                             <img
                               src="https://www.svgrepo.com/show/475656/google-color.svg"
                               alt="Google"
-                              className="w-5 h-5"
+                              className="w-4 h-4"
                             />
-                            <span className="text-sm font-medium text-gray-700">
-                              Sign in with Google
+                            <span className="font-medium text-gray-700">
+                              Continue with Google
                             </span>
                           </button>
-                          <p
-                            onClick={() =>
-                              setAuthMode(authMode === 'login' ? 'signup' : 'login')
-                            }
-                            className="text-xs text-center text-[#0e1e55] cursor-pointer hover:underline"
-                          >
-                            {authMode === 'login'
-                              ? "Don't have an account? Sign up"
-                              : 'Already have an account? Login'}
+
+                          {/* Switch between login/signup */}
+                          <p className="text-center text-xs text-gray-600 mt-2">
+                            {authMode === 'login' 
+                              ? "Don't have an account? " 
+                              : "Already have an account? "}
+                            <span
+                              onClick={() => setAuthMode(authMode === 'login' ? 'signup' : 'login')}
+                              className="text-[#0e1e55] font-semibold cursor-pointer hover:underline"
+                            >
+                              {authMode === 'login' ? 'Sign up' : 'Sign in'}
+                            </span>
                           </p>
-                        </form>
+                        </div>
                       )}
                     </div>
                   )}
@@ -373,36 +421,36 @@ export default function LayoutWithNav({ children }) {
         </header>
 
         {/* Main Content - Adjusted for header and bottom nav */}
-        <main className="pt-20 pb-24 min-h-screen">
+        <main className="pt-16 pb-20 min-h-screen">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {children}
           </div>
         </main>
 
-        {/* Bottom Navigation - Fixed with safe area for mobile */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 z-50 pb-safe">
-          <div className="flex items-center justify-around p-3">
+        {/* Bottom Navigation - Reduced gap */}
+        <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 z-50">
+          <div className="flex items-center justify-around p-2">
             {[
-              { icon: <Home size={20} />, name: 'Home', path: '/' },
-              { icon: <Handshake size={20} />, name: 'Partner', path: '/partner' },
-              { icon: <User size={20} />, name: 'Profile', path: '/profile' },
-              { icon: <Settings size={20} />, name: 'Settings', path: '/settings' },
+              { icon: <Home size={18} />, name: 'Home', path: '/' },
+              { icon: <Handshake size={18} />, name: 'Partner', path: '/partner' },
+              { icon: <User size={18} />, name: 'Profile', path: '/profile' },
+              { icon: <Settings size={18} />, name: 'Settings', path: '/settings' },
             ].map((item, index) => (
               <button
                 key={index}
                 onClick={() => router.push(item.path)}
-                className={`flex flex-col items-center p-2 flex-1 transition-all duration-300 min-w-0 ${
+                className={`flex flex-col items-center p-1 flex-1 transition-all duration-300 min-w-0 ${
                   pathname === item.path 
                     ? 'text-[#0e1e55] transform scale-105' 
                     : 'text-gray-600 hover:text-[#0e1e55]'
                 }`}
               >
-                <div className={`p-2 rounded-lg transition-colors ${
+                <div className={`p-1 rounded-lg transition-colors ${
                   pathname === item.path ? 'bg-[#0e1e55]/10' : ''
                 }`}>
                   {item.icon}
                 </div>
-                <span className="text-xs font-medium mt-1 truncate w-full text-center">
+                <span className="text-xs font-medium mt-0.5 truncate w-full text-center">
                   {item.name}
                 </span>
               </button>
