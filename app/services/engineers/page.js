@@ -6,38 +6,32 @@ import {
   ArrowLeft, 
   Star, 
   MapPin, 
-  Clock, 
   Phone, 
-  GraduationCap, 
-  Wrench, 
-  Briefcase,
-  Award,
-  CheckCircle,
-  X,
-  ArrowRight,
-  Shield,
-  Filter,
-  MessageCircle,
-  Calendar,
-  User
+  MessageCircle, 
+  X, 
+  Briefcase, 
+  Award, 
+  Clock,
+  GraduationCap,
+  Wrench,
+  Image as ImageIcon,
+  ChevronLeft,
+  ChevronRight,
+  Filter
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 
 export default function EngineersPage() {
-  const router = useRouter();
   const [engineers, setEngineers] = useState([]);
   const [filteredEngineers, setFilteredEngineers] = useState([]);
   const [selectedEngineer, setSelectedEngineer] = useState(null);
+  const [engineerWorkImages, setEngineerWorkImages] = useState([]);
+  const [loadingWorkImages, setLoadingWorkImages] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(null);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [activeFilter, setActiveFilter] = useState('all');
-  const [showBookingModal, setShowBookingModal] = useState(false);
 
-  // Support contact details
-  const supportContact = {
-    phone: '9480072737',
-    name: 'Karia Mitra Support'
-  };
+  const mediatorNumber = "9480072737";
 
   const filterTypes = [
     { key: 'all', label: 'All Engineers' },
@@ -61,10 +55,61 @@ export default function EngineersPage() {
           .order('Rating', { ascending: false });
 
         if (error) throw error;
-        setEngineers(data || []);
-        setFilteredEngineers(data || []);
+        
+        // If table is empty, use dummy data
+        if (!data || data.length === 0) {
+          const dummyEngineers = [
+            {
+              id: 1,
+              Name: 'Rajesh Kumar',
+              Experience: '8 years',
+              Location: 'Bengaluru, Karnataka',
+              Site_completed: 35,
+              Rating: 4.8,
+              Qualification: 'B.Tech Civil Engineering',
+              Specialization: 'Structural Engineer',
+              About: 'Expert in structural design and analysis with 8+ years of experience in residential and commercial projects.',
+              Phone: '9876543210',
+              Email: 'rajesh@engineer.com',
+              image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face'
+            },
+            {
+              id: 2,
+              Name: 'Priya Sharma',
+              Experience: '6 years',
+              Location: 'Hyderabad, Telangana',
+              Site_completed: 28,
+              Rating: 4.7,
+              Qualification: 'M.Tech Structural Engineering',
+              Specialization: 'Site Engineer',
+              About: 'Dedicated site engineer with expertise in project management and quality control for construction projects.',
+              Phone: '9988776655',
+              Email: 'priya@engineer.com',
+              image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=400&fit=crop&crop=face'
+            },
+            {
+              id: 3,
+              Name: 'Amit Patel',
+              Experience: '12 years',
+              Location: 'Mumbai, Maharashtra',
+              Site_completed: 62,
+              Rating: 4.9,
+              Qualification: 'B.Tech Civil Engineering',
+              Specialization: 'Project Engineer',
+              About: 'Senior project engineer with extensive experience in managing large-scale infrastructure projects.',
+              Phone: '9123456780',
+              Email: 'amit@engineer.com',
+              image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face'
+            }
+          ];
+          setEngineers(dummyEngineers);
+          setFilteredEngineers(dummyEngineers);
+        } else {
+          setEngineers(data);
+          setFilteredEngineers(data);
+        }
       } catch (err) {
-        setError(err.message);
+        console.error('Error fetching engineers:', err);
       } finally {
         setLoading(false);
       }
@@ -110,69 +155,173 @@ export default function EngineersPage() {
     filterEngineers();
   }, [activeFilter, engineers]);
 
-  const handleBookEngineer = (engineer) => {
-    setSelectedEngineer(engineer);
-    setShowBookingModal(true);
-  };
-
-  const handleWhatsAppBooking = () => {
-    if (!selectedEngineer) return;
-
-    const message = `🚀 *Booking Request - Karia Mitra* 🚀
-
-👤 *I want to book an engineer:*
-• *Engineer:* ${selectedEngineer.Name}
-• *Specialization:* ${selectedEngineer.Specialization || 'Professional Engineer'}
-• *Rating:* ${selectedEngineer.Rating || 'New'} ⭐
-
-🏗️ *Project Details:* [Please share your project requirements]
-
-📞 *My Contact:* [Your phone number]
-
-📍 *Project Location:* [Your location]
-
-I found this expert on Karia Mitra and would like to proceed with the booking!`;
-
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/${supportContact.phone}?text=${encodedMessage}`;
+  const fetchEngineerWorkImages = async (engineerId) => {
+    setLoadingWorkImages(true);
+    setEngineerWorkImages([]);
     
-    window.open(whatsappUrl, '_blank');
-    setShowBookingModal(false);
-    setSelectedEngineer(null);
+    try {
+      console.log("=== FETCHING WORK IMAGES FOR ENGINEER:", engineerId, "===");
+      
+      // First, check if engineer has work images in database works field
+      const { data: engineerData, error: dbError } = await supabase
+        .from('Engineer')
+        .select('works')
+        .eq('id', engineerId)
+        .single();
+
+      if (!dbError && engineerData.works && Array.isArray(engineerData.works)) {
+        const validDbImages = engineerData.works.filter(url => 
+          url && typeof url === 'string' && url.trim() !== '' && url.startsWith('http')
+        );
+        
+        if (validDbImages.length > 0) {
+          console.log("Found work images in database:", validDbImages);
+          setEngineerWorkImages(validDbImages);
+          setLoadingWorkImages(false);
+          return;
+        }
+      }
+
+      // If no images in database, check storage bucket
+      console.log("No images in database, checking storage bucket...");
+      
+      // List all files in the work-images folder
+      const { data: files, error: listError } = await supabase
+        .storage
+        .from('partner-profile')
+        .list('work-images', {
+          limit: 1000,
+          offset: 0,
+          sortBy: { column: 'name', order: 'desc' }
+        });
+
+      if (listError) {
+        console.error("Error listing work-images folder:", listError);
+        setEngineerWorkImages([]);
+        setLoadingWorkImages(false);
+        return;
+      }
+
+      console.log("All files in work-images folder:", files);
+
+      if (!files || files.length === 0) {
+        console.log("No files found in work-images folder");
+        setEngineerWorkImages([]);
+        setLoadingWorkImages(false);
+        return;
+      }
+
+      // Filter files for this specific engineer
+      const engineerFiles = files.filter(file => {
+        const fileName = file.name.toLowerCase();
+        
+        // Pattern for engineer work images
+        const engineerPatterns = [
+          `work_engineer_${engineerId}_`,
+          `engineer_${engineerId}_`,
+          `work_engineer${engineerId}_`,
+          `engineer${engineerId}_`
+        ];
+
+        return engineerPatterns.some(pattern => 
+          fileName.includes(pattern.toLowerCase())
+        );
+      });
+
+      console.log(`Found ${engineerFiles.length} work images for engineer ${engineerId}:`, engineerFiles);
+
+      // Get public URLs for matching files
+      const workImageUrls = [];
+      for (const file of engineerFiles) {
+        const { data: { publicUrl } } = supabase.storage
+          .from('partner-profile')
+          .getPublicUrl(`work-images/${file.name}`);
+
+        console.log(`Work image URL: ${publicUrl}`);
+        workImageUrls.push(publicUrl);
+      }
+
+      console.log("Final work image URLs:", workImageUrls);
+      setEngineerWorkImages(workImageUrls);
+
+    } catch (error) {
+      console.error("Error in fetchEngineerWorkImages:", error);
+      setEngineerWorkImages([]);
+    } finally {
+      setLoadingWorkImages(false);
+    }
   };
 
-  const handleCallSupport = () => {
-    window.location.href = `tel:${supportContact.phone}`;
+  const handleEngineerClick = async (engineer) => {
+    setSelectedEngineer(engineer);
+    await fetchEngineerWorkImages(engineer.id);
   };
+
+  const handleWhatsAppBooking = (engineer) => {
+    const message = `Hi Karia Mitra, I want to book ${engineer.Name} (${engineer.Specialization}). Please share their details.`;
+    const encodedMessage = encodeURIComponent(message);
+    window.open(`https://wa.me/${mediatorNumber}?text=${encodedMessage}`, '_blank');
+  };
+
+  const openImageGallery = (index) => {
+    setSelectedImageIndex(index);
+    setIsGalleryOpen(true);
+  };
+
+  const closeImageGallery = () => {
+    setIsGalleryOpen(false);
+    setSelectedImageIndex(null);
+  };
+
+  const goToNextImage = () => {
+    setSelectedImageIndex((prev) => 
+      prev === engineerWorkImages.length - 1 ? 0 : prev + 1
+    );
+  };
+
+  const goToPrevImage = () => {
+    setSelectedImageIndex((prev) => 
+      prev === 0 ? engineerWorkImages.length - 1 : prev - 1
+    );
+  };
+
+  // Handle keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!isGalleryOpen) return;
+      
+      if (e.key === 'Escape') {
+        closeImageGallery();
+      } else if (e.key === 'ArrowRight') {
+        goToNextImage();
+      } else if (e.key === 'ArrowLeft') {
+        goToPrevImage();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isGalleryOpen]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#f8fafc] via-[#f1f5f9] to-[#e2e8f0]">
-        {/* Loading Skeleton */}
-        <div className="w-full bg-gray-200 h-1.5">
-          <div className="h-full bg-gradient-to-r from-[#0e1e55] to-[#1e3a8a] animate-pulse"></div>
-        </div>
-
-        {/* Header Skeleton */}
-        <header className="bg-white shadow-sm border-b">
-          <div className="px-4 py-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gray-200 rounded-lg animate-pulse"></div>
-              <div className="space-y-2">
-                <div className="w-32 h-4 bg-gray-200 rounded animate-pulse"></div>
-                <div className="w-24 h-3 bg-gray-200 rounded animate-pulse"></div>
-              </div>
+      <div className="min-h-screen bg-gray-50">
+        <div className="bg-white p-4 border-b sticky top-0 z-10">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center gap-3">
+              <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <h1 className="text-lg md:text-xl font-bold text-gray-900">Professional Engineers</h1>
             </div>
           </div>
-        </header>
-
-        {/* Content Skeleton */}
-        <div className="px-4 py-6">
-          <div className="grid grid-cols-1 gap-4">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <div key={index} className="bg-white rounded-xl shadow-sm p-4 animate-pulse">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+        </div>
+        <div className="max-w-6xl mx-auto p-4 pt-6"> {/* Added pt-6 for top spacing */}
+          <div className="space-y-4">
+            {[1, 2, 3].map((item) => (
+              <div key={item} className="bg-white rounded-xl shadow-sm border p-4 animate-pulse">
+                <div className="flex items-start gap-4">
+                  <div className="w-16 h-16 bg-gray-200 rounded-full"></div>
                   <div className="flex-1 space-y-2">
                     <div className="w-3/4 h-4 bg-gray-200 rounded"></div>
                     <div className="w-1/2 h-3 bg-gray-200 rounded"></div>
@@ -187,86 +336,41 @@ I found this expert on Karia Mitra and would like to proceed with the booking!`;
     );
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-[#f8fafc] via-[#f1f5f9] to-[#e2e8f0] flex items-center justify-center px-4">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <X className="w-8 h-8 text-red-600" />
-          </div>
-          <p className="text-red-600 text-lg mb-4">Error: {error}</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="px-6 py-3 bg-gradient-to-r from-[#0e1e55] to-[#1e3a8a] text-white rounded-lg hover:opacity-90 transition-colors text-sm"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f8fafc] via-[#f1f5f9] to-[#e2e8f0]">
-      {/* Header - Mobile Optimized */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
-        <div className="px-3 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => router.back()}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-              >
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
-              </button>
-              <div className="flex items-center space-x-2">
-                <div className="p-2 bg-[#0e1e55]/10 rounded-lg">
-                  <Briefcase className="w-5 h-5 text-[#0e1e55]" />
-                </div>
-                <div>
-                  <h1 className="text-lg font-bold text-gray-900">
-                    Professional Engineers
-                  </h1>
-                  <p className="text-gray-600 text-xs">
-                    Certified experts for your projects
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center space-x-1 text-xs text-gray-500 bg-[#0e1e55]/5 px-2 py-1 rounded-full">
-              <CheckCircle className="w-3 h-3 text-green-500" />
-              <span>{filteredEngineers.length}</span>
-            </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header - Fixed with proper z-index */}
+      <div className="bg-white p-4 border-b sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => window.history.back()}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <h1 className="text-lg md:text-xl font-bold text-gray-900">Professional Engineers</h1>
           </div>
         </div>
       </div>
 
-      {/* Filter Section */}
-      <div className="px-3 py-4">
-        <div className="mb-4">
-          <h2 className="text-base font-bold text-gray-900 mb-1">
-            Available Engineers
-          </h2>
-          <p className="text-gray-600 text-xs">
-            Tap to view profile and book
-          </p>
-        </div>
-
-        {/* Filter Buttons - Scrollable */}
-        <div className="mb-4">
-          <div className="flex items-center space-x-2 mb-2">
-            <Filter className="w-4 h-4 text-gray-500" />
-            <span className="text-xs font-medium text-gray-600">Filter by:</span>
+      {/* Content with top spacing */}
+      <div className="max-w-6xl mx-auto p-4 pt-6"> {/* Added pt-6 for top spacing */}
+        
+        {/* Filter Section */}
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <Filter className="w-4 h-4 text-gray-600" />
+            <span className="text-sm font-medium text-gray-700">Filter by specialization:</span>
           </div>
-          <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
             {filterTypes.map((filter) => (
               <button
                 key={filter.key}
                 onClick={() => setActiveFilter(filter.key)}
                 className={`flex-shrink-0 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 border whitespace-nowrap ${
                   activeFilter === filter.key
-                    ? 'bg-[#0e1e55] text-white border-[#0e1e55] shadow-md transform scale-105'
-                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+                    ? 'bg-blue-500 text-white border-blue-500 shadow-sm'
+                    : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                 }`}
               >
                 {filter.label}
@@ -275,406 +379,316 @@ I found this expert on Karia Mitra and would like to proceed with the booking!`;
           </div>
         </div>
 
-        {/* Active Filter Count */}
-        <div className="flex items-center space-x-2 text-xs text-gray-500 mb-4">
+        {/* Active Filter Info */}
+        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
           <span>Showing</span>
-          <span className="font-semibold text-[#0e1e55]">{filteredEngineers.length}</span>
+          <span className="font-semibold text-blue-600">{filteredEngineers.length}</span>
           <span>of</span>
           <span className="font-semibold text-gray-700">{engineers.length}</span>
           <span>engineers</span>
           {activeFilter !== 'all' && (
-            <span className="bg-[#0e1e55]/10 text-[#0e1e55] px-2 py-0.5 rounded-full text-xs">
+            <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs">
               {filterTypes.find(f => f.key === activeFilter)?.label}
             </span>
           )}
         </div>
-      </div>
 
-      {/* Engineer List */}
-      <div className="px-3 py-4 pb-24">
-        {filteredEngineers.length > 0 ? (
-          <div className="grid grid-cols-1 gap-3">
-            {filteredEngineers.map((eng) => (
+        {/* Engineers List - Mobile Responsive */}
+        <div className="space-y-3 md:space-y-4">
+          {filteredEngineers.length === 0 ? (
+            <div className="text-center py-8 md:py-12">
+              <Briefcase className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500 text-lg">No engineers found</p>
+              {activeFilter !== 'all' && (
+                <button
+                  onClick={() => setActiveFilter('all')}
+                  className="mt-3 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
+                >
+                  Show All Engineers
+                </button>
+              )}
+            </div>
+          ) : (
+            filteredEngineers.map((engineer) => (
               <div
-                key={eng.id}
-                onClick={() => setSelectedEngineer(eng)}
-                className="group bg-white rounded-xl shadow-sm border border-gray-200 p-3 hover:shadow-md transition-all duration-300 cursor-pointer active:scale-95"
+                key={engineer.id}
+                onClick={() => handleEngineerClick(engineer)}
+                className="bg-white rounded-xl shadow-sm border p-4 hover:shadow-md transition-all duration-200 cursor-pointer active:scale-[0.98]"
               >
-                {/* Profile Section */}
-                <div className="flex items-center space-x-3">
-                  <div className="relative flex-shrink-0">
-                    <img
-                      src={eng.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'}
-                      alt={eng.Name}
-                      className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm"
-                    />
-                    <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-0.5 border-2 border-white">
-                      <Shield className="w-2.5 h-2.5 text-white" />
-                    </div>
-                  </div>
-                  
+                <div className="flex items-start gap-3 md:gap-4">
+                  <img
+                    src={engineer.image || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop"}
+                    alt={engineer.Name}
+                    className="w-12 h-12 md:w-16 md:h-16 rounded-full object-cover border-2 border-gray-200 flex-shrink-0"
+                  />
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-gray-900 text-sm truncate">
-                      {eng.Name}
-                    </h3>
-                    <p className="text-gray-500 text-xs truncate">
-                      {eng.Specialization || 'Professional Engineer'}
-                    </p>
-                    
-                    {/* Rating and Experience */}
-                    <div className="flex items-center space-x-2 mt-1">
-                      <div className="flex items-center space-x-1">
-                        <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                        <span className="text-xs font-semibold text-gray-700">
-                          {eng.Rating || 'New'}
-                        </span>
-                      </div>
-                      <span className="text-gray-300 text-xs">•</span>
-                      {eng.Experience && (
-                        <div className="flex items-center space-x-1 text-gray-500">
-                          <Briefcase className="w-3 h-3" />
-                          <span className="text-xs">{eng.Experience}</span>
-                        </div>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                      <h3 className="font-semibold text-gray-900 text-base md:text-lg truncate">{engineer.Name}</h3>
+                      {engineer.Rate && (
+                        <p className="text-green-600 font-semibold text-sm md:text-base whitespace-nowrap">₹{engineer.Rate}/hr</p>
                       )}
                     </div>
-
-                    {/* Location */}
-                    {eng.Location && (
-                      <div className="flex items-center text-gray-500 text-xs mt-1">
-                        <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
-                        <span className="truncate">{eng.Location}</span>
+                    <p className="text-gray-600 text-sm md:text-base">{engineer.Specialization || 'Professional Engineer'}</p>
+                    <div className="flex flex-wrap items-center gap-1 md:gap-2 mt-2">
+                      <div className="flex items-center gap-1">
+                        <Star className="w-3 h-3 md:w-4 md:h-4 text-yellow-400 fill-current" />
+                        <span className="text-xs md:text-sm text-gray-600">{engineer.Rating || 'New'}</span>
                       </div>
-                    )}
+                      <span className="text-gray-300 mx-1">•</span>
+                      {engineer.Experience && (
+                        <div className="flex items-center gap-1">
+                          <Briefcase className="w-3 h-3 md:w-4 md:h-4 text-gray-400" />
+                          <span className="text-xs md:text-sm text-gray-600">{engineer.Experience}</span>
+                        </div>
+                      )}
+                      <span className="text-gray-300 mx-1">•</span>
+                      <div className="flex items-center gap-1">
+                        <MapPin className="w-3 h-3 md:w-4 md:h-4 text-gray-400" />
+                        <span className="text-xs md:text-sm text-gray-600 truncate">{engineer.Location}</span>
+                      </div>
+                    </div>
                   </div>
-                  
-                  <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
                 </div>
-
-                {/* Specialization Badge */}
-                {eng.Specialization && (
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    <span className="px-1.5 py-0.5 bg-[#0e1e55]/10 text-[#0e1e55] rounded-full text-xs">
-                      {eng.Specialization}
-                    </span>
-                  </div>
-                )}
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12 px-4">
-            <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Briefcase className="w-6 h-6 text-gray-400" />
-            </div>
-            <h3 className="text-base font-semibold text-gray-900 mb-2">
-              No Engineers Found
-            </h3>
-            <p className="text-gray-600 text-sm">
-              {activeFilter === 'all' 
-                ? 'There are currently no engineers available.' 
-                : `No ${filterTypes.find(f => f.key === activeFilter)?.label.toLowerCase()} found.`
-              }
-            </p>
-            {activeFilter !== 'all' && (
-              <button
-                onClick={() => setActiveFilter('all')}
-                className="mt-3 px-4 py-2 bg-[#0e1e55] text-white rounded-lg hover:opacity-90 transition-colors text-sm"
-              >
-                Show All Engineers
-              </button>
-            )}
-          </div>
-        )}
+            ))
+          )}
+        </div>
       </div>
 
-      {/* Enhanced Engineer Detail Modal */}
-      {selectedEngineer && !showBookingModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 animate-in fade-in duration-300">
-          <div 
-            className="bg-white rounded-t-2xl sm:rounded-3xl shadow-2xl w-full max-w-full sm:max-w-2xl flex flex-col max-h-[95vh] sm:max-h-[85vh] transform transition-all duration-300 scale-95 sm:scale-100 animate-in slide-in-from-bottom duration-300"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Enhanced Header with Gradient */}
-            <div className="bg-gradient-to-r from-[#0e1e55] to-[#1e3a8a] rounded-t-2xl sm:rounded-t-3xl p-6 relative">
-              {/* Close Button */}
-              <button
-                onClick={() => setSelectedEngineer(null)}
-                className="absolute top-4 right-4 w-10 h-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-200 z-10 hover:scale-110"
-              >
-                <X className="w-5 h-5 text-white" />
-              </button>
-
-              {/* Profile Header */}
-              <div className="flex items-center space-x-4">
-                <div className="relative">
-                  <div className="relative">
-                    <img
-                      src={selectedEngineer.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'}
-                      alt={selectedEngineer.Name}
-                      className="w-20 h-20 rounded-2xl object-cover border-4 border-white/80 shadow-2xl"
-                    />
-                    <div className="absolute -bottom-2 -right-2 bg-green-500 rounded-full p-2 border-4 border-white">
-                      <Shield className="w-4 h-4 text-white" />
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex-1 text-white">
-                  <h2 className="text-2xl font-bold mb-1 drop-shadow-lg">
-                    {selectedEngineer.Name}
-                  </h2>
-                  <p className="text-blue-100 text-lg font-medium mb-3 drop-shadow-lg">
-                    {selectedEngineer.Specialization || 'Professional Engineer'}
-                  </p>
-                  
-                  {/* Stats Row */}
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2 bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
-                      <Star className="w-4 h-4 text-yellow-300 fill-current" />
-                      <span className="font-bold text-white text-sm">
-                        {selectedEngineer.Rating || 'New'}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2 bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
-                      <Briefcase className="w-4 h-4 text-white" />
-                      <span className="font-bold text-white text-sm">
-                        {selectedEngineer.Site_completed || 0} Projects
-                      </span>
-                    </div>
+      {/* Engineer Detail Modal - Mobile Responsive */}
+      {selectedEngineer && (
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+          <div className="bg-white rounded-t-3xl sm:rounded-2xl w-full h-[90vh] sm:h-auto sm:max-h-[90vh] max-w-4xl flex flex-col">
+            {/* Header - Sticky */}
+            <div className="relative bg-gradient-to-r from-blue-500 to-purple-600 p-4 sm:p-6 flex-shrink-0">
+              <div className="flex items-start gap-3 sm:gap-4">
+                <img
+                  src={selectedEngineer.image || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop"}
+                  alt={selectedEngineer.Name}
+                  className="w-14 h-14 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-white shadow-lg flex-shrink-0"
+                />
+                <div className="text-white flex-1 min-w-0">
+                  <h2 className="text-lg sm:text-2xl font-bold truncate">{selectedEngineer.Name}</h2>
+                  <p className="text-blue-100 text-sm sm:text-base">{selectedEngineer.Specialization || 'Professional Engineer'}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Star className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-300 fill-current" />
+                    <span className="text-sm sm:text-base">{selectedEngineer.Rating || 'New'}</span>
                   </div>
                 </div>
               </div>
+              <button
+                onClick={() => {
+                  setSelectedEngineer(null);
+                  setEngineerWorkImages([]);
+                }}
+                className="absolute top-3 right-3 sm:top-4 sm:right-4 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+              >
+                <X className="w-4 h-4 text-white" />
+              </button>
             </div>
 
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto pb-28 sm:pb-4">
-              <div className="p-6 space-y-6">
-                {/* Stats Grid */}
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Experience */}
-                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-100 transform hover:scale-105 transition-transform duration-200">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                        <Clock className="w-6 h-6 text-green-600" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-green-600 font-semibold">Experience</p>
-                        <p className="font-bold text-gray-900 text-sm">
-                          {selectedEngineer.Experience || 'Not specified'}
-                        </p>
-                      </div>
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-20 sm:pb-8">
+              {/* Stats Grid - Mobile Responsive */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6">
+                {selectedEngineer.Experience && (
+                  <div className="flex items-center gap-2 sm:gap-3 bg-blue-50 border border-blue-200 rounded-lg p-2 sm:p-3">
+                    <Briefcase className="w-4 h-4 sm:w-6 sm:h-6 text-blue-600 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs text-blue-600 font-medium truncate">Experience</p>
+                      <p className="font-bold text-gray-900 text-sm truncate">{selectedEngineer.Experience}</p>
                     </div>
-                  </div>
-
-                  {/* Location */}
-                  <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-100 transform hover:scale-105 transition-transform duration-200">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <MapPin className="w-6 h-6 text-purple-600" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-purple-600 font-semibold">Location</p>
-                        <p className="font-bold text-gray-900 text-sm">
-                          {selectedEngineer.Location || 'Not specified'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Qualification */}
-                  <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-4 border border-orange-100 transform hover:scale-105 transition-transform duration-200">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                        <GraduationCap className="w-6 h-6 text-orange-600" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-orange-600 font-semibold">Qualification</p>
-                        <p className="font-bold text-gray-900 text-sm">
-                          {selectedEngineer.Qualification || 'Not specified'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Projects */}
-                  <div className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-xl p-4 border border-cyan-100 transform hover:scale-105 transition-transform duration-200">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center">
-                        <Wrench className="w-6 h-6 text-cyan-600" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-cyan-600 font-semibold">Projects</p>
-                        <p className="font-bold text-gray-900 text-lg">
-                          {selectedEngineer.Site_completed || 0}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Expertise Section */}
-                {selectedEngineer.Specialization && (
-                  <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-5 border border-blue-100">
-                    <h3 className="font-bold text-gray-900 text-lg mb-3 flex items-center">
-                      <Award className="w-5 h-5 text-blue-600 mr-2" />
-                      Area of Expertise
-                    </h3>
-                    <p className="text-gray-700 leading-relaxed text-sm">
-                      {selectedEngineer.Specialization}
-                    </p>
                   </div>
                 )}
-
-                {/* Verification Badge */}
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-4 border border-green-200">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                      <Shield className="w-5 h-5 text-green-600" />
+                {selectedEngineer.Site_completed && (
+                  <div className="flex items-center gap-2 sm:gap-3 bg-green-50 border border-green-200 rounded-lg p-2 sm:p-3">
+                    <Award className="w-4 h-4 sm:w-6 sm:h-6 text-green-600 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs text-green-600 font-medium truncate">Projects</p>
+                      <p className="font-bold text-gray-900 text-sm truncate">{selectedEngineer.Site_completed}</p>
                     </div>
-                    <div>
-                      <p className="font-semibold text-green-800 text-sm">Verified Engineer</p>
-                      <p className="text-green-600 text-xs">Profile verified by Karia Mitra</p>
+                  </div>
+                )}
+                {selectedEngineer.Rate && (
+                  <div className="flex items-center gap-2 sm:gap-3 bg-orange-50 border border-orange-200 rounded-lg p-2 sm:p-3">
+                    <Clock className="w-4 h-4 sm:w-6 sm:h-6 text-orange-600 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs text-orange-600 font-medium truncate">Rate</p>
+                      <p className="font-bold text-green-600 text-sm truncate">₹{selectedEngineer.Rate}/hr</p>
                     </div>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 sm:gap-3 bg-purple-50 border border-purple-200 rounded-lg p-2 sm:p-3">
+                  <Star className="w-4 h-4 sm:w-6 sm:h-6 text-purple-600 flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-xs text-purple-600 font-medium truncate">Rating</p>
+                    <p className="font-bold text-gray-900 text-sm truncate">{selectedEngineer.Rating || 'New'}</p>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Enhanced Action Buttons - Mobile Optimized */}
-            <div className="sticky bottom-0 bg-white border-t border-gray-200 p-6 pb-8 sm:pb-6 backdrop-blur-sm bg-white/95 safe-area-padding">
-              <div className="grid grid-cols-2 gap-4">
-                {/* WhatsApp Button */}
-                <button
-                  onClick={() => handleBookEngineer(selectedEngineer)}
-                  className="group bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
-                >
-                  <MessageCircle className="w-6 h-6 group-hover:scale-110 transition-transform duration-200" />
-                  <span className="text-base">WhatsApp</span>
-                </button>
-
-                {/* Call Button */}
-                <button
-                  onClick={handleCallSupport}
-                  className="group bg-gradient-to-r from-[#0e1e55] to-[#1e3a8a] hover:from-[#1e3a8a] hover:to-[#0e1e55] text-white font-bold py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
-                >
-                  <Phone className="w-6 h-6 group-hover:scale-110 transition-transform duration-200" />
-                  <span className="text-base">Call</span>
-                </button>
-              </div>
-              
-              {/* Contact Note */}
-              <p className="text-xs text-gray-500 text-center mt-3">
-                Contact Karia Mitra to connect with {selectedEngineer.Name}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Enhanced Booking Confirmation Modal */}
-      {showBookingModal && selectedEngineer && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 animate-in fade-in duration-300">
-          <div 
-            className="bg-white rounded-t-2xl sm:rounded-3xl shadow-2xl w-full max-w-full sm:max-w-md flex flex-col max-h-[95vh] sm:max-h-[85vh] transform transition-all duration-300 scale-95 sm:scale-100 animate-in slide-in-from-bottom duration-300"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="bg-gradient-to-r from-[#0e1e55] to-[#1e3a8a] rounded-t-2xl sm:rounded-t-3xl p-6 relative">
-              <button
-                onClick={() => setShowBookingModal(false)}
-                className="absolute top-4 right-4 w-10 h-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-200 z-10 hover:scale-110"
-              >
-                <X className="w-5 h-5 text-white" />
-              </button>
-
-              <div className="text-center text-white">
-                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Calendar className="w-8 h-8 text-white" />
+              {/* Qualification Section */}
+              {selectedEngineer.Qualification && (
+                <div className="mb-4 sm:mb-6">
+                  <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-2">Qualification</h3>
+                  <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-lg p-3">
+                    <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 flex-shrink-0" />
+                    <p className="text-gray-600 text-xs sm:text-sm">{selectedEngineer.Qualification}</p>
+                  </div>
                 </div>
-                <h2 className="text-xl font-bold mb-2 drop-shadow-lg">
-                  Book This Engineer
-                </h2>
-                <p className="text-blue-100 text-sm drop-shadow-lg">
-                  Continue to WhatsApp to complete your booking
-                </p>
-              </div>
-            </div>
+              )}
 
-            {/* Engineer Summary */}
-            <div className="flex-1 overflow-y-auto pb-28 sm:pb-4">
-              <div className="p-6 space-y-6">
-                <div className="bg-gradient-to-br from-gray-50 to-slate-50 rounded-2xl p-5 border border-gray-200">
-                  <div className="flex items-center space-x-4">
-                    <img
-                      src={selectedEngineer.image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'}
-                      alt={selectedEngineer.Name}
-                      className="w-16 h-16 rounded-2xl object-cover border-2 border-white shadow-lg"
-                    />
-                    <div>
-                      <h3 className="font-bold text-gray-900 text-lg">
-                        {selectedEngineer.Name}
-                      </h3>
-                      <p className="text-[#0e1e55] font-semibold text-sm">
-                        {selectedEngineer.Specialization}
-                      </p>
-                      <div className="flex items-center space-x-1 mt-1">
-                        <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                        <span className="text-sm font-semibold text-gray-700">
-                          {selectedEngineer.Rating || 'New'}
-                        </span>
+              {/* Work Images Section - Mobile Responsive */}
+              {loadingWorkImages ? (
+                <div className="mb-4 sm:mb-6">
+                  <div className="flex items-center gap-2 mb-2 sm:mb-3">
+                    <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+                    <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Loading Work Photos...</h3>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
+                    {[1, 2, 3].map((item) => (
+                      <div key={item} className="w-full aspect-video bg-gray-200 rounded-lg animate-pulse"></div>
+                    ))}
+                  </div>
+                </div>
+              ) : engineerWorkImages.length > 0 ? (
+                <div className="mb-4 sm:mb-6">
+                  <div className="flex items-center gap-2 mb-2 sm:mb-3">
+                    <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+                    <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
+                      Previous Work Photos ({engineerWorkImages.length})
+                    </h3>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
+                    {engineerWorkImages.map((imageUrl, index) => (
+                      <div 
+                        key={index} 
+                        className="relative cursor-pointer group"
+                        onClick={() => openImageGallery(index)}
+                      >
+                        <img
+                          src={imageUrl}
+                          alt={`Work ${index + 1}`}
+                          className="w-full aspect-video object-cover rounded-lg border group-hover:opacity-80 transition-opacity duration-200"
+                          onError={(e) => {
+                            console.error("Failed to load image:", imageUrl);
+                            e.target.style.display = 'none';
+                          }}
+                          onLoad={() => console.log("Successfully loaded image:", imageUrl)}
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 rounded-lg flex items-center justify-center">
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white/90 rounded-full p-2">
+                            <ImageIcon className="w-4 h-4 text-gray-700" />
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
-
-                {/* Booking Info */}
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-3 text-sm text-gray-600">
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                    <span>No advance payment required</span>
-                  </div>
-                  <div className="flex items-center space-x-3 text-sm text-gray-600">
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                    <span>Share your project details</span>
-                  </div>
-                  <div className="flex items-center space-x-3 text-sm text-gray-600">
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                    <span>Get instant confirmation</span>
-                  </div>
+              ) : (
+                <div className="mb-4 sm:mb-6 text-center py-4 text-gray-500 text-sm sm:text-base">
+                  No work photos available
                 </div>
-              </div>
-            </div>
+              )}
 
-            {/* Enhanced Action Buttons - Mobile Optimized */}
-            <div className="sticky bottom-0 bg-white border-t border-gray-200 p-6 pb-8 sm:pb-6 backdrop-blur-sm bg-white/95 safe-area-padding">
-              <div className="space-y-3">
-                <button
-                  onClick={handleWhatsAppBooking}
-                  className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
-                >
-                  <MessageCircle className="w-6 h-6 group-hover:scale-110 transition-transform duration-200" />
-                  <span className="text-base">Continue to WhatsApp</span>
-                </button>
-                
-                <button
-                  onClick={handleCallSupport}
-                  className="w-full bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 text-white font-bold py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
-                >
-                  <Phone className="w-6 h-6 group-hover:scale-110 transition-transform duration-200" />
-                  <span className="text-base">Call Support First</span>
-                </button>
+              {/* About Section - Mobile Responsive */}
+              {selectedEngineer.About && (
+                <div className="mb-4 sm:mb-6">
+                  <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-2">About</h3>
+                  <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">{selectedEngineer.About}</p>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="mt-6 mb-10">
+                <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
+                  <button
+                    onClick={() => handleWhatsAppBooking(selectedEngineer)}
+                    className="bg-green-500 text-white py-3 px-4 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-green-600 transition-colors text-sm sm:text-base"
+                  >
+                    <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <span>WhatsApp</span>
+                  </button>
+                  <button
+                    onClick={() => window.location.href = `tel:${selectedEngineer.Phone || mediatorNumber}`}
+                    className="bg-blue-500 text-white py-3 px-4 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-blue-600 transition-colors text-sm sm:text-base"
+                  >
+                    <Phone className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <span>Call</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Add CSS for safe areas */}
-      <style jsx>{`
-        .safe-area-padding {
-          padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
-        }
-      `}</style>
+      {/* Image Gallery Modal */}
+      {isGalleryOpen && selectedImageIndex !== null && (
+        <div className="fixed inset-0 bg-black/95 z-[60] flex items-center justify-center">
+          {/* Close Button */}
+          <button
+            onClick={closeImageGallery}
+            className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+          >
+            <X className="w-6 h-6 text-white" />
+          </button>
+
+          {/* Navigation Buttons */}
+          {engineerWorkImages.length > 1 && (
+            <>
+              <button
+                onClick={goToPrevImage}
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+              >
+                <ChevronLeft className="w-6 h-6 text-white" />
+              </button>
+              <button
+                onClick={goToNextImage}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+              >
+                <ChevronRight className="w-6 h-6 text-white" />
+              </button>
+            </>
+          )}
+
+          {/* Image Counter */}
+          <div className="absolute top-4 left-4 z-10 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+            {selectedImageIndex + 1} / {engineerWorkImages.length}
+          </div>
+
+          {/* Main Image */}
+          <div className="relative w-full h-full flex items-center justify-center p-4">
+            <img
+              src={engineerWorkImages[selectedImageIndex]}
+              alt={`Work ${selectedImageIndex + 1}`}
+              className="max-w-full max-h-full object-contain rounded-lg"
+              onClick={closeImageGallery}
+            />
+          </div>
+
+          {/* Thumbnail Strip (Desktop) */}
+          {engineerWorkImages.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 hidden md:flex gap-2 max-w-full overflow-x-auto px-4">
+              {engineerWorkImages.map((image, index) => (
+                <button
+                  key={index}
+                  onClick={() => setSelectedImageIndex(index)}
+                  className={`flex-shrink-0 w-16 h-16 rounded border-2 transition-all ${
+                    index === selectedImageIndex ? 'border-white scale-110' : 'border-white/30'
+                  }`}
+                >
+                  <img
+                    src={image}
+                    alt={`Thumbnail ${index + 1}`}
+                    className="w-full h-full object-cover rounded"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

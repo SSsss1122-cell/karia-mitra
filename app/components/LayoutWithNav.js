@@ -267,7 +267,7 @@ export default function LayoutWithNav({ children }) {
                 />
                 <div className="flex flex-col">
                   <span className="text-xl font-bold text-gray-900 leading-tight">Karia Mitra</span>
-                  <span className="text-xs text-gray-600 leading-tight">Build Smart</span>
+            
                 </div>
               </div>
 

@@ -10,7 +10,8 @@ export default function HomePage() {
   const [user, setUser] = useState(null);
   const [updateInfo, setUpdateInfo] = useState(null);
   const [showUpdatePrompt, setShowUpdatePrompt] = useState(false);
-  const [currentAppVersion, setCurrentAppVersion] = useState('1.1.0'); // ✅ Current app version
+  const [currentAppVersion, setCurrentAppVersion] = useState('1.1.0');
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
   const router = useRouter();
 
   // Professional categories with beautiful gradient colors
@@ -134,53 +135,84 @@ export default function HomePage() {
     }
   ];
 
+  // ✅ Function to get current app version from localStorage or use default
+  const getCurrentAppVersion = () => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('currentAppVersion') || '1.1.0';
+    }
+    return '1.1.0';
+  };
+
+  // ✅ Function to save current app version
+  const saveCurrentAppVersion = (version) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('currentAppVersion', version);
+      setCurrentAppVersion(version);
+    }
+  };
+
   // ✅ Enhanced App update checker with proper version comparison
-  useEffect(() => {
-    const checkForUpdates = async () => {
-      try {
-        console.log('🔍 Checking for updates... Current version:', currentAppVersion);
+  const checkForUpdates = async () => {
+    try {
+      setIsCheckingUpdate(true);
+      const currentVersion = getCurrentAppVersion();
+      console.log('🔍 Checking for updates... Current version:', currentVersion);
+      
+      const { data, error } = await supabase
+        .from('app_updates')
+        .select('*')
+        .eq('is_active', true)
+        .order('version_code', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Supabase error:', error);
+        return;
+      }
+
+      if (data) {
+        console.log('📱 Latest version from Supabase:', data.version_name);
+        console.log('🔄 Comparing versions:', currentVersion, 'vs', data.version_name);
         
-        const { data, error } = await supabase
-          .from('app_updates')
-          .select('*')
-          .eq('is_active', true) // ✅ Only check active updates
-          .order('version_code', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (error) {
-          console.error('Supabase error:', error);
-          return;
-        }
-
-        if (data) {
-          console.log('📱 Latest version from Supabase:', data.version_name);
-          console.log('🔄 Comparing versions:', currentAppVersion, 'vs', data.version_name);
-          
-          // ✅ Compare versions - show update only if different
-          if (data.version_name !== currentAppVersion) {
-            console.log('🚨 Update available!');
-            setUpdateInfo(data);
-            setShowUpdatePrompt(true);
-          } else {
-            console.log('✅ App is up to date');
-            setUpdateInfo(null);
-            setShowUpdatePrompt(false);
-          }
+        // ✅ Compare versions - show update only if different
+        if (data.version_name !== currentVersion) {
+          console.log('🚨 Update available!');
+          setUpdateInfo(data);
+          setShowUpdatePrompt(true);
         } else {
-          console.log('📭 No active updates found in database');
+          console.log('✅ App is up to date');
           setUpdateInfo(null);
           setShowUpdatePrompt(false);
         }
-      } catch (err) {
-        console.error('Update check error:', err.message);
+      } else {
+        console.log('📭 No active updates found in database');
         setUpdateInfo(null);
         setShowUpdatePrompt(false);
       }
-    };
+    } catch (err) {
+      console.error('Update check error:', err.message);
+      setUpdateInfo(null);
+      setShowUpdatePrompt(false);
+    } finally {
+      setIsCheckingUpdate(false);
+    }
+  };
 
+  // Check for updates on component mount
+  useEffect(() => {
+    // Initialize current version from localStorage
+    const savedVersion = getCurrentAppVersion();
+    setCurrentAppVersion(savedVersion);
+    
+    // Check for updates
     checkForUpdates();
-  }, [currentAppVersion]);
+
+    // Set up periodic update checks (every 5 minutes)
+    const updateInterval = setInterval(checkForUpdates, 5 * 60 * 1000);
+    
+    return () => clearInterval(updateInterval);
+  }, []);
 
   // Check user session on component mount
   useEffect(() => {
@@ -216,6 +248,9 @@ export default function HomePage() {
 
   const handleUpdateClick = () => {
     if (updateInfo?.apk_url) {
+      // ✅ Update the current version in localStorage and state
+      saveCurrentAppVersion(updateInfo.version_name);
+      
       // ✅ Increment download count in database
       const incrementDownloadCount = async () => {
         try {
@@ -229,7 +264,13 @@ export default function HomePage() {
       };
       
       incrementDownloadCount();
+      setShowUpdatePrompt(false);
       window.open(updateInfo.apk_url, '_blank');
+      
+      // ✅ Re-check updates after a delay to confirm version update
+      setTimeout(() => {
+        checkForUpdates();
+      }, 2000);
     }
   };
 
@@ -237,102 +278,111 @@ export default function HomePage() {
     setShowUpdatePrompt(false);
   };
 
-  return (
-    <div className="pb-8">
-      {/* 🆕 Enhanced Update Prompt - Only shows when versions don't match */}
-      {showUpdatePrompt && updateInfo && (
-        <div className="fixed bottom-6 right-6 w-80 sm:w-96 z-50 animate-in slide-in-from-bottom-full duration-500">
-          <div className="bg-gradient-to-br from-white to-gray-50/95 backdrop-blur-lg shadow-2xl border border-gray-200/80 rounded-2xl p-6 relative overflow-hidden">
-            {/* Background Pattern */}
-            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-blue-500/5 to-cyan-500/5 rounded-full -translate-y-8 translate-x-8"></div>
-            
-            {/* Close Button */}
-            <button
-              onClick={handleClosePrompt}
-              className="absolute top-4 right-4 p-1.5 hover:bg-gray-100 rounded-lg transition-colors duration-200 group"
-            >
-              <X className="w-4 h-4 text-gray-500 group-hover:text-gray-700" />
-            </button>
+  const handleManualUpdateCheck = () => {
+    checkForUpdates();
+  };
 
+  return (
+    <div className="pb-8 pt-8"> {/* ✅ INCREASED to pt-8 for more spacing */}
+      {/* 🆕 Centered Update Prompt - Shows when versions don't match */}
+      {showUpdatePrompt && updateInfo && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+          <div className="bg-gradient-to-br from-white to-gray-50/95 backdrop-blur-lg shadow-2xl border border-gray-200/80 rounded-2xl w-full max-w-md mx-auto transform transition-all duration-500 scale-95 animate-in slide-in-from-bottom-8">
             {/* Header */}
-            <div className="flex items-start space-x-4 mb-4 relative z-10">
-              <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
-                <Download className="w-6 h-6 text-white" />
-              </div>
-              
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center space-x-2 mb-1">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    v{updateInfo.version_name}
-                  </span>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    New
-                  </span>
+            <div className="relative p-6 border-b border-gray-200/60">
+              {/* Close Button */}
+              <button
+                onClick={handleClosePrompt}
+                className="absolute top-4 right-4 p-1.5 hover:bg-gray-100 rounded-lg transition-colors duration-200 group"
+              >
+                <X className="w-4 h-4 text-gray-500 group-hover:text-gray-700" />
+              </button>
+
+              <div className="flex items-center space-x-4">
+                <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
+                  <Download className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 leading-tight">
-                  Update Available! 🚀
-                </h3>
-                <p className="text-xs text-gray-500 mt-1">
-                  Current: v{currentAppVersion} → Latest: v{updateInfo.version_name}
-                </p>
+                
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      v{updateInfo.version_name}
+                    </span>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      New Version
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900 leading-tight">
+                    Update Available! 🚀
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Current: v{currentAppVersion} → Latest: v{updateInfo.version_name}
+                  </p>
+                </div>
               </div>
             </div>
 
             {/* Release Notes */}
-            <div className="mb-5 relative z-10">
+            <div className="p-6 border-b border-gray-200/60">
               <p className="text-gray-600 text-sm leading-relaxed mb-3">
                 {updateInfo.release_notes || 'Experience improved performance, new features, and bug fixes for better app experience.'}
               </p>
               
-              <div className="flex items-center space-x-2 text-xs text-gray-500">
-                <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                <span>Enhanced performance</span>
-              </div>
-              <div className="flex items-center space-x-2 text-xs text-gray-500">
-                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                <span>New features added</span>
-              </div>
-              <div className="flex items-center space-x-2 text-xs text-gray-500">
-                <div className="w-1.5 h-1.5 bg-purple-500 rounded-full"></div>
-                <span>Bug fixes & improvements</span>
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2 text-xs text-gray-500">
+                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                  <span>Enhanced performance & stability</span>
+                </div>
+                <div className="flex items-center space-x-2 text-xs text-gray-500">
+                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                  <span>New features added</span>
+                </div>
+                <div className="flex items-center space-x-2 text-xs text-gray-500">
+                  <div className="w-1.5 h-1.5 bg-purple-500 rounded-full"></div>
+                  <span>Bug fixes & improvements</span>
+                </div>
               </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex space-x-3 relative z-10">
+            <div className="p-6">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={handleUpdateClick}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Update Now</span>
+                </button>
+                
+                <button
+                  onClick={handleClosePrompt}
+                  className="px-4 py-3 border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium rounded-xl transition-all duration-200"
+                >
+                  Later
+                </button>
+              </div>
+
+              {/* Manual update check button */}
               <button
-                onClick={handleUpdateClick}
-                className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
+                onClick={handleManualUpdateCheck}
+                disabled={isCheckingUpdate}
+                className="w-full mt-3 text-xs text-gray-500 hover:text-gray-700 transition-colors disabled:opacity-50"
               >
-                <Download className="w-4 h-4" />
-                <span>Update Now</span>
-              </button>
-              
-              <button
-                onClick={handleClosePrompt}
-                className="px-4 py-3 border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium rounded-xl transition-all duration-200"
-              >
-                Later
+                {isCheckingUpdate ? 'Checking for updates...' : 'Check for updates manually'}
               </button>
             </div>
 
             {/* Progress Bar Animation */}
-            <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-200">
+            <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-200 rounded-b-2xl">
               <div className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 animate-pulse"></div>
-            </div>
-          </div>
-
-          {/* Floating notification badge */}
-          <div className="absolute -top-2 -right-2">
-            <div className="bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold animate-bounce">
-              !
             </div>
           </div>
         </div>
       )}
 
       {/* Hero Slider Section */}
-      <section className="px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8 pt-4">
+      <section className="px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8"> {/* ✅ No pt-4 here */}
         <div className="max-w-7xl mx-auto">
           <div className="relative h-48 sm:h-64 lg:h-80 xl:h-96 rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl sm:shadow-2xl group">
             <div 
@@ -471,78 +521,86 @@ export default function HomePage() {
       </section>
 
       {/* Equipment Categories Section */}
-     <section className="px-4 sm:px-6 lg:px-8 pb-8">
-  <div className="max-w-7xl mx-auto">
-    <div className="text-center mb-8 sm:mb-10 lg:mb-12">
-      <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2 sm:mb-3">
-        📦 Equipment Categories
-      </h2>
-      <p className="text-gray-600 text-sm sm:text-base lg:text-lg">
-        Rent or buy quality construction equipment
-      </p>
-    </div>
+      <section className="px-4 sm:px-6 lg:px-8 pb-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-8 sm:mb-10 lg:mb-12">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2 sm:mb-3">
+              📦 Equipment Categories
+            </h2>
+            <p className="text-gray-600 text-sm sm:text-base lg:text-lg">
+              Rent or buy quality construction equipment
+            </p>
+          </div>
 
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
-      {leaseCategories.map((category) => (
-        <div
-          key={category.name}
-          onClick={() => router.push("/shops")}
-          className="group relative bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 cursor-pointer border border-gray-100 overflow-hidden"
-        >
-          <div
-            className={`absolute inset-0 bg-gradient-to-br ${category.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`}
-          ></div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
+            {leaseCategories.map((category) => (
+              <div
+                key={category.name}
+                onClick={() => router.push("/shops")}
+                className="group relative bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 cursor-pointer border border-gray-100 overflow-hidden"
+              >
+                <div
+                  className={`absolute inset-0 bg-gradient-to-br ${category.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`}
+                ></div>
 
-          <div className="flex items-center space-x-4 sm:space-x-6">
-            <div className="flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 relative">
-              <img
-                src={category.image}
-                alt={category.name}
-                className="w-full h-full object-cover rounded-xl sm:rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300"
-                onError={(e) => handleImageError(e, category.name)}
-              />
-            </div>
+                <div className="flex items-center space-x-4 sm:space-x-6">
+                  <div className="flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 relative">
+                    <img
+                      src={category.image}
+                      alt={category.name}
+                      className="w-full h-full object-cover rounded-xl sm:rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300"
+                      onError={(e) => handleImageError(e, category.name)}
+                    />
+                  </div>
 
-            <div className="flex-1 min-w-0">
-              <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1 sm:mb-2 group-hover:text-gray-800 transition-colors">
-                {category.name}
-              </h3>
-              <p className="text-gray-600 text-sm sm:text-base mb-3 sm:mb-4 leading-relaxed">
-                {category.subtitle}
-              </p>
-              <div className="flex">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    router.push("/shops");
-                  }}
-                  className="px-6 py-3 bg-gradient-to-r from-[#0e1e55] to-[#1e3a8a] text-white font-semibold rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 text-sm sm:text-base w-full text-center"
-                >
-                  Explore Shops
-                </button>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1 sm:mb-2 group-hover:text-gray-800 transition-colors">
+                      {category.name}
+                    </h3>
+                    <p className="text-gray-600 text-sm sm:text-base mb-3 sm:mb-4 leading-relaxed">
+                      {category.subtitle}
+                    </p>
+                    <div className="flex">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push("/shops");
+                        }}
+                        className="px-6 py-3 bg-gradient-to-r from-[#0e1e55] to-[#1e3a8a] text-white font-semibold rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 text-sm sm:text-base w-full text-center"
+                      >
+                        Explore Shops
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
+            ))}
           </div>
         </div>
-      ))}
-    </div>
-  </div>
-</section>
-
+      </section>
 
       {/* Footer showing current app version */}
       <footer className="mt-10 mb-4 text-gray-500 text-sm text-center">
-        <p>
-          App Version:&nbsp;
-          <span className="font-medium text-gray-700">
-            v{currentAppVersion}
-          </span>
-          {updateInfo && (
-            <span className="text-xs text-gray-400 ml-2">
-              (Latest: v{updateInfo.version_name})
+        <div className="flex flex-col items-center space-y-2">
+          <p>
+            App Version:&nbsp;
+            <span className="font-medium text-gray-700">
+              v{currentAppVersion}
             </span>
-          )}
-        </p>
+            {updateInfo && (
+              <span className="text-xs text-gray-400 ml-2">
+                (Latest: v{updateInfo.version_name})
+              </span>
+            )}
+          </p>
+          <button
+            onClick={handleManualUpdateCheck}
+            disabled={isCheckingUpdate}
+            className="text-xs text-blue-600 hover:text-blue-800 transition-colors disabled:opacity-50"
+          >
+            {isCheckingUpdate ? 'Checking for updates...' : 'Check for updates'}
+          </button>
+        </div>
       </footer>
     </div>
   );

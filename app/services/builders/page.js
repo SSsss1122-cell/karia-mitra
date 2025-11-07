@@ -1,43 +1,34 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { supabase } from '../../lib/supabase';
 import { 
   ArrowLeft, 
   Star, 
   MapPin, 
-  CheckCircle, 
-  Mail, 
   Phone, 
-  ClipboardList,
-  Award,
-  Briefcase,
+  MessageCircle, 
+  X, 
+  Briefcase, 
+  Award, 
   Clock,
-  Shield,
-  X,
-  ArrowRight,
-  Building,
-  MessageCircle,
-  Users,
-  Home,
-  Check,
   Image as ImageIcon,
-  Camera
+  ChevronLeft,
+  ChevronRight,
+  Building
 } from 'lucide-react';
 
 export default function BuildersPage() {
-  const router = useRouter();
   const [builders, setBuilders] = useState([]);
   const [selectedBuilder, setSelectedBuilder] = useState(null);
+  const [builderWorkImages, setBuilderWorkImages] = useState([]);
+  const [loadingWorkImages, setLoadingWorkImages] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(null);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [builderWorkImages, setBuilderWorkImages] = useState({});
 
-  // ✅ Mediator contact information
   const mediatorNumber = "9480072737";
 
-  // ✅ Fetch Builders from Supabase
   useEffect(() => {
     const fetchBuilders = async () => {
       try {
@@ -49,7 +40,6 @@ export default function BuildersPage() {
 
         if (error) throw error;
 
-        // If table is empty, use dummy data
         if (!data || data.length === 0) {
           const dummyBuilders = [
             {
@@ -106,7 +96,7 @@ export default function BuildersPage() {
           setBuilders(data);
         }
       } catch (err) {
-        setError(err.message);
+        console.error('Error fetching builders:', err);
       } finally {
         setLoading(false);
       }
@@ -115,83 +105,39 @@ export default function BuildersPage() {
     fetchBuilders();
   }, []);
 
-  // ✅ Fetch work images when builder is selected
-  useEffect(() => {
-    if (selectedBuilder) {
-      fetchBuilderWorkImages(selectedBuilder.id);
-    }
-  }, [selectedBuilder]);
-
-  // ✅ Function to fetch work images from partner-profile/work-images folder
   const fetchBuilderWorkImages = async (builderId) => {
+    setLoadingWorkImages(true);
+    setBuilderWorkImages([]);
+    
     try {
-      console.log(`🔍 Fetching work images for builder ${builderId} from partner-profile/work-images...`);
-
-      let allWorkImages = [];
-
-      // 1. First check database works field
-      const dbImages = await fetchFromDatabase(builderId);
-      if (dbImages.length > 0) {
-        console.log(`📁 Found ${dbImages.length} images in database works field`);
-        allWorkImages = [...allWorkImages, ...dbImages];
-      }
-
-      // 2. Check partner-profile bucket work-images folder
-      const storageImages = await fetchFromPartnerProfileWorkImages(builderId);
-      if (storageImages.length > 0) {
-        console.log(`🪣 Found ${storageImages.length} images in partner-profile/work-images`);
-        allWorkImages = [...allWorkImages, ...storageImages];
-      }
-
-      console.log(`✅ Total work images found: ${allWorkImages.length}`);
-
-      // Update state with ALL found images
-      setBuilderWorkImages(prev => ({
-        ...prev,
-        [builderId]: allWorkImages
-      }));
-
-    } catch (err) {
-      console.error('❌ Error fetching work images:', err);
-      setBuilderWorkImages(prev => ({
-        ...prev,
-        [builderId]: []
-      }));
-    }
-  };
-
-  // ✅ Check database works field
-  const fetchFromDatabase = async (builderId) => {
-    try {
-      const { data, error } = await supabase
+      console.log("=== FETCHING WORK IMAGES FOR BUILDER:", builderId, "===");
+      
+      // First, check if builder has work images in database works field
+      const { data: builderData, error: dbError } = await supabase
         .from('Builder')
         .select('works')
         .eq('id', builderId)
         .single();
 
-      if (error) throw error;
-
-      if (data.works && Array.isArray(data.works) && data.works.length > 0) {
-        // Filter out empty or invalid URLs
-        const validImages = data.works.filter(url => 
+      if (!dbError && builderData.works && Array.isArray(builderData.works)) {
+        const validDbImages = builderData.works.filter(url => 
           url && typeof url === 'string' && url.trim() !== '' && url.startsWith('http')
         );
-        return validImages;
+        
+        if (validDbImages.length > 0) {
+          console.log("Found work images in database:", validDbImages);
+          setBuilderWorkImages(validDbImages);
+          setLoadingWorkImages(false);
+          return;
+        }
       }
-      return [];
-    } catch (err) {
-      console.error('Error fetching from database:', err);
-      return [];
-    }
-  };
 
-  // ✅ SPECIFICALLY check partner-profile/work-images folder
-  const fetchFromPartnerProfileWorkImages = async (builderId) => {
-    try {
-      console.log(`📂 Checking partner-profile bucket, work-images folder for builder ${builderId}...`);
+      // If no images in database, check storage bucket
+      console.log("No images in database, checking storage bucket...");
       
-      // List files specifically from the work-images folder in partner-profile bucket
-      const { data: files, error: listError } = await supabase.storage
+      // List all files in the work-images folder
+      const { data: files, error: listError } = await supabase
+        .storage
         .from('partner-profile')
         .list('work-images', {
           limit: 1000,
@@ -200,109 +146,127 @@ export default function BuildersPage() {
         });
 
       if (listError) {
-        console.error('❌ Error listing work-images folder:', listError);
-        return [];
+        console.error("Error listing work-images folder:", listError);
+        setBuilderWorkImages([]);
+        setLoadingWorkImages(false);
+        return;
       }
 
-      console.log(`📄 Found ${files?.length || 0} files in work-images folder`);
-      
-      if (files && files.length > 0) {
-        // Log all files for debugging
-        console.log('All files in work-images folder:', files.map(f => f.name));
+      console.log("All files in work-images folder:", files);
+
+      if (!files || files.length === 0) {
+        console.log("No files found in work-images folder");
+        setBuilderWorkImages([]);
+        setLoadingWorkImages(false);
+        return;
+      }
+
+      // Filter files for this specific builder
+      const builderFiles = files.filter(file => {
+        const fileName = file.name.toLowerCase();
         
-        // Look for files that belong to this builder
-        // Builders are stored with pattern: work_builder_{builderId}_{timestamp}
-        const builderFiles = files.filter(file => {
-          const fileName = file.name.toLowerCase();
-          
-          // Pattern for builder work images
-          const builderPatterns = [
-            `work_builder_${builderId}_`,
-            `builder_${builderId}_`,
-            `work_builder${builderId}_`,
-            `builder${builderId}_`
-          ];
+        // Pattern for builder work images
+        const builderPatterns = [
+          `work_builder_${builderId}_`,
+          `builder_${builderId}_`,
+          `work_builder${builderId}_`,
+          `builder${builderId}_`
+        ];
 
-          const isBuilderFile = builderPatterns.some(pattern => 
-            fileName.includes(pattern.toLowerCase())
-          );
+        return builderPatterns.some(pattern => 
+          fileName.includes(pattern.toLowerCase())
+        );
+      });
 
-          if (isBuilderFile) {
-            console.log(`✅ Found builder work image: ${file.name}`);
-          }
+      console.log(`Found ${builderFiles.length} work images for builder ${builderId}:`, builderFiles);
 
-          return isBuilderFile;
-        });
+      // Get public URLs for matching files
+      const workImageUrls = [];
+      for (const file of builderFiles) {
+        const { data: { publicUrl } } = supabase.storage
+          .from('partner-profile')
+          .getPublicUrl(`work-images/${file.name}`);
 
-        console.log(`🎯 Found ${builderFiles.length} work images for builder ${builderId}`);
-
-        // Get public URLs for matching files
-        const workImageUrls = [];
-        for (const file of builderFiles) {
-          const { data: { publicUrl } } = supabase.storage
-            .from('partner-profile')
-            .getPublicUrl(`work-images/${file.name}`);
-
-          console.log(`🔗 Work image URL: ${publicUrl}`);
-          workImageUrls.push(publicUrl);
-        }
-
-        return workImageUrls;
+        console.log(`Work image URL: ${publicUrl}`);
+        workImageUrls.push(publicUrl);
       }
 
-      return [];
+      console.log("Final work image URLs:", workImageUrls);
+      setBuilderWorkImages(workImageUrls);
 
-    } catch (err) {
-      console.error('❌ Error in fetchFromPartnerProfileWorkImages:', err);
-      return [];
+    } catch (error) {
+      console.error("Error in fetchBuilderWorkImages:", error);
+      setBuilderWorkImages([]);
+    } finally {
+      setLoadingWorkImages(false);
     }
   };
 
-  // ✅ WhatsApp booking function
+  const handleBuilderClick = async (builder) => {
+    setSelectedBuilder(builder);
+    await fetchBuilderWorkImages(builder.id);
+  };
+
   const handleWhatsAppBooking = (builder) => {
-    const message = `Hi Karia Mitra, I want to book ${builder.Name} (Builder). Please share their details and help me connect with them.`;
+    const message = `Hi Karia Mitra, I want to book ${builder.Name} (Builder). Please share their details.`;
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/${mediatorNumber}?text=${encodedMessage}`, '_blank');
   };
 
-  // ✅ Call function - just opens dialer without number
-  const handleCall = () => {
-    window.location.href = 'tel:';
+  const openImageGallery = (index) => {
+    setSelectedImageIndex(index);
+    setIsGalleryOpen(true);
   };
 
-  // ✅ Check if builder has work images
-  const hasWorkImages = (builderId) => {
-    return builderWorkImages[builderId] && builderWorkImages[builderId].length > 0;
+  const closeImageGallery = () => {
+    setIsGalleryOpen(false);
+    setSelectedImageIndex(null);
   };
+
+  const goToNextImage = () => {
+    setSelectedImageIndex((prev) => 
+      prev === builderWorkImages.length - 1 ? 0 : prev + 1
+    );
+  };
+
+  const goToPrevImage = () => {
+    setSelectedImageIndex((prev) => 
+      prev === 0 ? builderWorkImages.length - 1 : prev - 1
+    );
+  };
+
+  // Handle keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!isGalleryOpen) return;
+      
+      if (e.key === 'Escape') {
+        closeImageGallery();
+      } else if (e.key === 'ArrowRight') {
+        goToNextImage();
+      } else if (e.key === 'ArrowLeft') {
+        goToPrevImage();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isGalleryOpen]);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#f8fafc] via-[#f1f5f9] to-[#e2e8f0]">
-        {/* Loading Skeleton */}
-        <div className="w-full bg-gray-200 h-1.5">
-          <div className="h-full bg-gradient-to-r from-[#0e1e55] to-[#1e3a8a] animate-pulse"></div>
-        </div>
-
-        {/* Header Skeleton */}
-        <header className="bg-white shadow-sm border-b">
-          <div className="px-4 py-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-gray-200 rounded-lg animate-pulse"></div>
-              <div className="space-y-2">
-                <div className="w-32 h-4 bg-gray-200 rounded animate-pulse"></div>
-                <div className="w-24 h-3 bg-gray-200 rounded animate-pulse"></div>
-              </div>
-            </div>
+      <div className="min-h-screen bg-gray-50">
+        <div className="bg-white p-4 border-b">
+          <div className="max-w-6xl mx-auto">
+            <h1 className="text-lg md:text-xl font-bold text-gray-900 text-center">Professional Builders</h1>
           </div>
-        </header>
-
-        {/* Content Skeleton */}
-        <div className="px-4 py-6">
-          <div className="grid grid-cols-1 gap-4">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <div key={index} className="bg-white rounded-xl shadow-sm p-4 animate-pulse">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
+        </div>
+        <div className="max-w-6xl mx-auto p-4">
+          <div className="space-y-4">
+            {[1, 2, 3].map((item) => (
+              <div key={item} className="bg-white rounded-xl shadow-sm border p-4 animate-pulse">
+                <div className="flex items-start gap-4">
+                  <div className="w-16 h-16 bg-gray-200 rounded-full"></div>
                   <div className="flex-1 space-y-2">
                     <div className="w-3/4 h-4 bg-gray-200 rounded"></div>
                     <div className="w-1/2 h-3 bg-gray-200 rounded"></div>
@@ -317,430 +281,329 @@ export default function BuildersPage() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-[#f8fafc] via-[#f1f5f9] to-[#e2e8f0] flex items-center justify-center px-4">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <X className="w-8 h-8 text-red-600" />
-          </div>
-          <p className="text-red-600 text-lg mb-4">Error: {error}</p>
-          <button 
-            onClick={() => window.location.reload()}
-            className="px-6 py-3 bg-gradient-to-r from-[#0e1e55] to-[#1e3a8a] text-white rounded-lg hover:opacity-90 transition-colors text-sm"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f8fafc] via-[#f1f5f9] to-[#e2e8f0]">
-      {/* Header - Mobile Optimized */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
-        <div className="px-3 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => router.back()}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-              >
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
-              </button>
-              <div className="flex items-center space-x-2">
-                <div className="p-2 bg-[#0e1e55]/10 rounded-lg">
-                  <Building className="w-5 h-5 text-[#0e1e55]" />
-                </div>
-                <div>
-                  <h1 className="text-lg font-bold text-gray-900">
-                    Professional Builders
-                  </h1>
-                  <p className="text-gray-600 text-xs">
-                    Trusted construction experts
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center space-x-1 text-xs text-gray-500 bg-[#0e1e55]/5 px-2 py-1 rounded-full">
-              <CheckCircle className="w-3 h-3 text-green-500" />
-              <span>{builders.length}</span>
-            </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white p-4 border-b sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => window.history.back()}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <h1 className="text-lg md:text-xl font-bold text-gray-900">Professional Builders</h1>
           </div>
         </div>
       </div>
 
-      {/* Builder List - Mobile First Design */}
-      <div className="px-3 py-4 pb-24">
-        <div className="mb-4">
-          <h2 className="text-base font-bold text-gray-900 mb-1">
-            Available Builders
-          </h2>
-          <p className="text-gray-600 text-xs">
-            Tap to view profile and contact
-          </p>
-        </div>
-
-        {builders.length > 0 ? (
-          <div className="grid grid-cols-1 gap-3">
-            {builders.map((builder) => (
+      {/* Content */}
+      <div className="max-w-6xl mx-auto p-4">
+        {/* Builders List - Mobile Responsive */}
+        <div className="space-y-3 md:space-y-4">
+          {builders.length === 0 ? (
+            <div className="text-center py-8 md:py-12">
+              <Building className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500 text-lg">No builders found</p>
+            </div>
+          ) : (
+            builders.map((builder) => (
               <div
                 key={builder.id}
-                onClick={() => setSelectedBuilder(builder)}
-                className="group bg-white rounded-xl shadow-sm border border-gray-200 p-3 hover:shadow-md transition-all duration-300 cursor-pointer active:scale-95"
+                onClick={() => handleBuilderClick(builder)}
+                className="bg-white rounded-xl shadow-sm border p-4 hover:shadow-md transition-all duration-200 cursor-pointer active:scale-[0.98]"
               >
-                {/* Profile Section */}
-                <div className="flex items-center space-x-3">
-                  <div className="relative flex-shrink-0">
-                    <img
-                      src={builder.Image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'}
-                      alt={builder.Name}
-                      className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm"
-                    />
-                    {builder.Verified && (
-                      <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-0.5 border-2 border-white">
-                        <Shield className="w-2.5 h-2.5 text-white" />
+                <div className="flex items-start gap-3 md:gap-4">
+                  <img
+                    src={builder.Image || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop"}
+                    alt={builder.Name}
+                    className="w-12 h-12 md:w-16 md:h-16 rounded-full object-cover border-2 border-gray-200 flex-shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                      <h3 className="font-semibold text-gray-900 text-base md:text-lg truncate">{builder.Name}</h3>
+                      {builder.Rate && (
+                        <p className="text-green-600 font-semibold text-sm md:text-base whitespace-nowrap">₹{builder.Rate}/sq.ft</p>
+                      )}
+                    </div>
+                    <p className="text-gray-600 text-sm md:text-base">Professional Builder</p>
+                    <div className="flex flex-wrap items-center gap-1 md:gap-2 mt-2">
+                      <div className="flex items-center gap-1">
+                        <Star className="w-3 h-3 md:w-4 md:h-4 text-yellow-400 fill-current" />
+                        <span className="text-xs md:text-sm text-gray-600">{builder.Rating || 'New'}</span>
+                      </div>
+                      <span className="text-gray-300 mx-1">•</span>
+                      <div className="flex items-center gap-1">
+                        <MapPin className="w-3 h-3 md:w-4 md:h-4 text-gray-400" />
+                        <span className="text-xs md:text-sm text-gray-600 truncate">{builder.Location}</span>
+                      </div>
+                    </div>
+                    {builder.Specialties && builder.Specialties.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {builder.Specialties.slice(0, 2).map((specialty, index) => (
+                          <span
+                            key={index}
+                            className="px-2 py-1 bg-blue-100 text-blue-600 rounded-full text-xs"
+                          >
+                            {specialty}
+                          </span>
+                        ))}
+                        {builder.Specialties.length > 2 && (
+                          <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
+                            +{builder.Specialties.length - 2}
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between">
-                      <h3 className="font-bold text-gray-900 text-sm truncate">
-                        {builder.Name}
-                      </h3>
-                      {/* Work Images Badge */}
-                      {hasWorkImages(builder.id) && (
-                        <div className="flex items-center space-x-1 bg-blue-50 px-2 py-1 rounded-full ml-2">
-                          <Camera className="w-3 h-3 text-blue-600" />
-                          <span className="text-blue-600 text-xs font-medium">
-                            {builderWorkImages[builder.id]?.length || 0}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <p className="text-gray-500 text-xs truncate">
-                      {builder.Specialties?.[0] || 'Construction Builder'}
-                    </p>
-                    
-                    {/* Rating and Projects */}
-                    <div className="flex items-center space-x-2 mt-1">
-                      <div className="flex items-center space-x-1">
-                        <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                        <span className="text-xs font-semibold text-gray-700">
-                          {builder.Rating || 'New'}
-                        </span>
-                      </div>
-                      <span className="text-gray-300 text-xs">•</span>
-                      <div className="flex items-center space-x-1 text-gray-500">
-                        <ClipboardList className="w-3 h-3" />
-                        <span className="text-xs">{builder.Projects_completed || 0}</span>
-                      </div>
-                    </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
 
-                    {/* Location */}
-                    <div className="flex items-center text-gray-500 text-xs mt-1">
-                      <MapPin className="w-3 h-3 mr-1 flex-shrink-0" />
-                      <span className="truncate">{builder.Location || 'Location N/A'}</span>
+      {/* Builder Detail Modal - Mobile Responsive */}
+      {selectedBuilder && (
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+          <div className="bg-white rounded-t-3xl sm:rounded-2xl w-full h-[90vh] sm:h-auto sm:max-h-[90vh] max-w-4xl flex flex-col">
+            {/* Header - Sticky */}
+            <div className="relative bg-gradient-to-r from-blue-500 to-purple-600 p-4 sm:p-6 flex-shrink-0">
+              <div className="flex items-start gap-3 sm:gap-4">
+                <img
+                  src={selectedBuilder.Image || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop"}
+                  alt={selectedBuilder.Name}
+                  className="w-14 h-14 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-white shadow-lg flex-shrink-0"
+                />
+                <div className="text-white flex-1 min-w-0">
+                  <h2 className="text-lg sm:text-2xl font-bold truncate">{selectedBuilder.Name}</h2>
+                  <p className="text-blue-100 text-sm sm:text-base">Professional Builder</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Star className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-300 fill-current" />
+                    <span className="text-sm sm:text-base">{selectedBuilder.Rating || 'New'}</span>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setSelectedBuilder(null);
+                  setBuilderWorkImages([]);
+                }}
+                className="absolute top-3 right-3 sm:top-4 sm:right-4 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+              >
+                <X className="w-4 h-4 text-white" />
+              </button>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-20 sm:pb-8">
+              {/* Stats Grid - Mobile Responsive */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6">
+                {selectedBuilder.Experience && (
+                  <div className="flex items-center gap-2 sm:gap-3 bg-blue-50 border border-blue-200 rounded-lg p-2 sm:p-3">
+                    <Briefcase className="w-4 h-4 sm:w-6 sm:h-6 text-blue-600 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs text-blue-600 font-medium truncate">Experience</p>
+                      <p className="font-bold text-gray-900 text-sm truncate">{selectedBuilder.Experience}</p>
                     </div>
                   </div>
-                  
-                  <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                )}
+                {selectedBuilder.Projects_completed && (
+                  <div className="flex items-center gap-2 sm:gap-3 bg-green-50 border border-green-200 rounded-lg p-2 sm:p-3">
+                    <Award className="w-4 h-4 sm:w-6 sm:h-6 text-green-600 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs text-green-600 font-medium truncate">Projects</p>
+                      <p className="font-bold text-gray-900 text-sm truncate">{selectedBuilder.Projects_completed}</p>
+                    </div>
+                  </div>
+                )}
+                {selectedBuilder.Rate && (
+                  <div className="flex items-center gap-2 sm:gap-3 bg-orange-50 border border-orange-200 rounded-lg p-2 sm:p-3">
+                    <Clock className="w-4 h-4 sm:w-6 sm:h-6 text-orange-600 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs text-orange-600 font-medium truncate">Rate</p>
+                      <p className="font-bold text-green-600 text-sm truncate">₹{selectedBuilder.Rate}/sq.ft</p>
+                    </div>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 sm:gap-3 bg-purple-50 border border-purple-200 rounded-lg p-2 sm:p-3">
+                  <Star className="w-4 h-4 sm:w-6 sm:h-6 text-purple-600 flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-xs text-purple-600 font-medium truncate">Rating</p>
+                    <p className="font-bold text-gray-900 text-sm truncate">{selectedBuilder.Rating || 'New'}</p>
+                  </div>
                 </div>
+              </div>
 
-                {/* Specialties */}
-                {builder.Specialties && builder.Specialties.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {builder.Specialties.slice(0, 2).map((specialty, index) => (
+              {/* Specialties Section */}
+              {selectedBuilder.Specialties && selectedBuilder.Specialties.length > 0 && (
+                <div className="mb-4 sm:mb-6">
+                  <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-2">Specializations</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedBuilder.Specialties.map((specialty, index) => (
                       <span
                         key={index}
-                        className="px-1.5 py-0.5 bg-[#0e1e55]/10 text-[#0e1e55] rounded-full text-xs"
+                        className="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-sm"
                       >
                         {specialty}
                       </span>
                     ))}
-                    {builder.Specialties.length > 2 && (
-                      <span className="px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded-full text-xs">
-                        +{builder.Specialties.length - 2}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12 px-4">
-            <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Building className="w-6 h-6 text-gray-400" />
-            </div>
-            <h3 className="text-base font-semibold text-gray-900 mb-2">
-              No Builders Available
-            </h3>
-            <p className="text-gray-600 text-sm">
-              Check back later for available builders
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Enhanced Builder Detail Modal */}
-      {selectedBuilder && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 animate-in fade-in duration-300">
-          <div 
-            className="bg-white rounded-t-2xl sm:rounded-3xl shadow-2xl w-full max-w-full sm:max-w-2xl flex flex-col max-h-[95vh] sm:max-h-[85vh] transform transition-all duration-300 scale-95 sm:scale-100 animate-in slide-in-from-bottom duration-300"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Enhanced Header with Gradient */}
-            <div className="bg-gradient-to-r from-[#0e1e55] to-[#1e3a8a] rounded-t-2xl sm:rounded-t-3xl p-6 relative">
-              {/* Close Button */}
-              <button
-                onClick={() => setSelectedBuilder(null)}
-                className="absolute top-4 right-4 w-10 h-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-200 z-10 hover:scale-110"
-              >
-                <X className="w-5 h-5 text-white" />
-              </button>
-
-              {/* Profile Header */}
-              <div className="flex items-center space-x-4">
-                <div className="relative">
-                  <div className="relative">
-                    <img
-                      src={selectedBuilder.Image || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face'}
-                      alt={selectedBuilder.Name}
-                      className="w-20 h-20 rounded-2xl object-cover border-4 border-white/80 shadow-2xl"
-                    />
-                    {selectedBuilder.Verified && (
-                      <div className="absolute -bottom-2 -right-2 bg-green-500 rounded-full p-2 border-4 border-white">
-                        <Check className="w-4 h-4 text-white" />
-                      </div>
-                    )}
                   </div>
                 </div>
-                
-                <div className="flex-1 text-white">
-                  <h2 className="text-2xl font-bold mb-1 drop-shadow-lg">
-                    {selectedBuilder.Name}
-                  </h2>
-                  <p className="text-blue-100 text-lg font-medium mb-3 drop-shadow-lg">
-                    Professional Builder
-                  </p>
-                  
-                  {/* Stats Row */}
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center space-x-2 bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
-                      <Star className="w-4 h-4 text-yellow-300 fill-current" />
-                      <span className="font-bold text-white text-sm">
-                        {selectedBuilder.Rating || 'New'}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2 bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
-                      <ClipboardList className="w-4 h-4 text-white" />
-                      <span className="font-bold text-white text-sm">
-                        {selectedBuilder.Projects_completed || 0} Projects
-                      </span>
-                    </div>
+              )}
+
+              {/* Work Images Section - Mobile Responsive */}
+              {loadingWorkImages ? (
+                <div className="mb-4 sm:mb-6">
+                  <div className="flex items-center gap-2 mb-2 sm:mb-3">
+                    <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+                    <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Loading Work Photos...</h3>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
+                    {[1, 2, 3].map((item) => (
+                      <div key={item} className="w-full aspect-video bg-gray-200 rounded-lg animate-pulse"></div>
+                    ))}
                   </div>
                 </div>
-              </div>
-            </div>
-
-            {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto pb-28 sm:pb-4">
-              <div className="p-6 space-y-6">
-                {/* Work Images Section */}
-                {hasWorkImages(selectedBuilder.id) && (
-                  <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-2xl p-5 border border-orange-100">
-                    <h3 className="font-bold text-gray-900 text-lg mb-3 flex items-center">
-                      <Camera className="w-5 h-5 text-orange-600 mr-2" />
-                      Work Portfolio
-                      <span className="ml-2 bg-orange-500 text-white text-xs px-2 py-1 rounded-full">
-                        {builderWorkImages[selectedBuilder.id]?.length || 0} images
-                      </span>
+              ) : builderWorkImages.length > 0 ? (
+                <div className="mb-4 sm:mb-6">
+                  <div className="flex items-center gap-2 mb-2 sm:mb-3">
+                    <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+                    <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
+                      Previous Work Photos ({builderWorkImages.length})
                     </h3>
-                    <div className="grid grid-cols-3 gap-2">
-                      {builderWorkImages[selectedBuilder.id]?.slice(0, 6).map((imageUrl, index) => (
-                        <div key={index} className="relative aspect-square rounded-lg overflow-hidden border border-orange-200">
-                          <img
-                            src={imageUrl}
-                            alt={`Work ${index + 1}`}
-                            className="w-full h-full object-cover hover:scale-110 transition-transform duration-300"
-                            onError={(e) => {
-                              console.error(`Failed to load image: ${imageUrl}`);
-                              e.target.style.display = 'none';
-                            }}
-                          />
-                        </div>
-                      ))}
-                      {builderWorkImages[selectedBuilder.id]?.length > 6 && (
-                        <div className="relative aspect-square rounded-lg overflow-hidden border border-orange-200 bg-orange-100 flex items-center justify-center">
-                          <div className="text-center">
-                            <span className="text-orange-600 font-bold text-lg">
-                              +{builderWorkImages[selectedBuilder.id].length - 6}
-                            </span>
-                            <p className="text-orange-500 text-xs">More</p>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
+                    {builderWorkImages.map((imageUrl, index) => (
+                      <div 
+                        key={index} 
+                        className="relative cursor-pointer group"
+                        onClick={() => openImageGallery(index)}
+                      >
+                        <img
+                          src={imageUrl}
+                          alt={`Work ${index + 1}`}
+                          className="w-full aspect-video object-cover rounded-lg border group-hover:opacity-80 transition-opacity duration-200"
+                          onError={(e) => {
+                            console.error("Failed to load image:", imageUrl);
+                            e.target.style.display = 'none';
+                          }}
+                          onLoad={() => console.log("Successfully loaded image:", imageUrl)}
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 rounded-lg flex items-center justify-center">
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white/90 rounded-full p-2">
+                            <ImageIcon className="w-4 h-4 text-gray-700" />
                           </div>
                         </div>
-                      )}
-                    </div>
-                    <p className="text-orange-600 text-xs mt-2 text-center">
-                      View their completed projects and work quality
-                    </p>
-                  </div>
-                )}
-
-                {/* Specialties Section */}
-                {selectedBuilder.Specialties && selectedBuilder.Specialties.length > 0 && (
-                  <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-5 border border-blue-100">
-                    <h3 className="font-bold text-gray-900 text-lg mb-3 flex items-center">
-                      <Award className="w-5 h-5 text-blue-600 mr-2" />
-                      Specializations
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedBuilder.Specialties.map((specialty, index) => (
-                        <span
-                          key={index}
-                          className="px-4 py-2 bg-white border border-blue-200 text-blue-700 rounded-full text-sm font-medium shadow-sm hover:shadow-md transition-shadow duration-200"
-                        >
-                          {specialty}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Stats Grid */}
-                <div className="grid grid-cols-2 gap-4">
-                  {/* Experience */}
-                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-100 transform hover:scale-105 transition-transform duration-200">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                        <Briefcase className="w-6 h-6 text-green-600" />
                       </div>
-                      <div>
-                        <p className="text-xs text-green-600 font-semibold">Experience</p>
-                        <p className="font-bold text-gray-900 text-lg">
-                          {selectedBuilder.Experience || 'Not specified'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Location */}
-                  <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-100 transform hover:scale-105 transition-transform duration-200">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                        <MapPin className="w-6 h-6 text-purple-600" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-purple-600 font-semibold">Location</p>
-                        <p className="font-bold text-gray-900 text-sm">
-                          {selectedBuilder.Location || 'Not specified'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* License */}
-                  <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-4 border border-orange-100 transform hover:scale-105 transition-transform duration-200">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                        <Shield className="w-6 h-6 text-orange-600" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-orange-600 font-semibold">License</p>
-                        <p className="font-bold text-gray-900 text-sm">
-                          {selectedBuilder.License || 'Not specified'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Projects */}
-                  <div className="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-xl p-4 border border-cyan-100 transform hover:scale-105 transition-transform duration-200">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center">
-                        <Home className="w-6 h-6 text-cyan-600" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-cyan-600 font-semibold">Projects</p>
-                        <p className="font-bold text-gray-900 text-lg">
-                          {selectedBuilder.Projects_completed || 0}
-                        </p>
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
+              ) : (
+                <div className="mb-4 sm:mb-6 text-center py-4 text-gray-500 text-sm sm:text-base">
+                  No work photos available
+                </div>
+              )}
 
-                {/* About Section */}
-                {selectedBuilder.About && (
-                  <div className="bg-gradient-to-br from-gray-50 to-slate-50 rounded-2xl p-5 border border-gray-200">
-                    <h3 className="font-bold text-gray-900 text-lg mb-3 flex items-center">
-                      <Users className="w-5 h-5 text-gray-600 mr-2" />
-                      About {selectedBuilder.Name.split(' ')[0]}
-                    </h3>
-                    <p className="text-gray-700 leading-relaxed text-sm">
-                      {selectedBuilder.About}
-                    </p>
-                  </div>
-                )}
+              {/* About Section - Mobile Responsive */}
+              {selectedBuilder.About && (
+                <div className="mb-4 sm:mb-6">
+                  <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-2">About</h3>
+                  <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">{selectedBuilder.About}</p>
+                </div>
+              )}
 
-                {/* Verification Badge */}
-                {selectedBuilder.Verified && (
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl p-4 border border-green-200">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                        <Check className="w-5 h-5 text-green-600" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-green-800 text-sm">Verified Builder</p>
-                        <p className="text-green-600 text-xs">Profile verified by Karia Mitra</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
+              {/* Action Buttons */}
+              <div className="mt-6 mb-10">
+                <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
+                  <button
+                    onClick={() => handleWhatsAppBooking(selectedBuilder)}
+                    className="bg-green-500 text-white py-3 px-4 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-green-600 transition-colors text-sm sm:text-base"
+                  >
+                    <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <span>WhatsApp</span>
+                  </button>
+                  <button
+                    onClick={() => window.location.href = `tel:${selectedBuilder.Phone || mediatorNumber}`}
+                    className="bg-blue-500 text-white py-3 px-4 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-blue-600 transition-colors text-sm sm:text-base"
+                  >
+                    <Phone className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <span>Call</span>
+                  </button>
+                </div>
               </div>
-            </div>
-
-            {/* Enhanced Action Buttons - Mobile Optimized */}
-            <div className="sticky bottom-0 bg-white border-t border-gray-200 p-6 pb-8 sm:pb-6 backdrop-blur-sm bg-white/95 safe-area-padding">
-              <div className="grid grid-cols-2 gap-4">
-                {/* WhatsApp Button */}
-                <button
-                  onClick={() => handleWhatsAppBooking(selectedBuilder)}
-                  className="group bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
-                >
-                  <MessageCircle className="w-6 h-6 group-hover:scale-110 transition-transform duration-200" />
-                  <span className="text-base">WhatsApp</span>
-                </button>
-
-                {/* Call Button */}
-                <button
-                  onClick={handleCall}
-                  className="group bg-gradient-to-r from-[#0e1e55] to-[#1e3a8a] hover:from-[#1e3a8a] hover:to-[#0e1e55] text-white font-bold py-4 px-4 rounded-xl transition-all duration-300 flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
-                >
-                  <Phone className="w-6 h-6 group-hover:scale-110 transition-transform duration-200" />
-                  <span className="text-base">Call</span>
-                </button>
-              </div>
-              
-              {/* Contact Note */}
-              <p className="text-xs text-gray-500 text-center mt-3">
-                Contact Karia Mitra to connect with {selectedBuilder.Name}
-              </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Add CSS for safe areas */}
-      <style jsx>{`
-        .safe-area-padding {
-          padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
-        }
-      `}</style>
+      {/* Image Gallery Modal */}
+      {isGalleryOpen && selectedImageIndex !== null && (
+        <div className="fixed inset-0 bg-black/95 z-[60] flex items-center justify-center">
+          {/* Close Button */}
+          <button
+            onClick={closeImageGallery}
+            className="absolute top-4 right-4 z-10 w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+          >
+            <X className="w-6 h-6 text-white" />
+          </button>
+
+          {/* Navigation Buttons */}
+          {builderWorkImages.length > 1 && (
+            <>
+              <button
+                onClick={goToPrevImage}
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+              >
+                <ChevronLeft className="w-6 h-6 text-white" />
+              </button>
+              <button
+                onClick={goToNextImage}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+              >
+                <ChevronRight className="w-6 h-6 text-white" />
+              </button>
+            </>
+          )}
+
+          {/* Image Counter */}
+          <div className="absolute top-4 left-4 z-10 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+            {selectedImageIndex + 1} / {builderWorkImages.length}
+          </div>
+
+          {/* Main Image */}
+          <div className="relative w-full h-full flex items-center justify-center p-4">
+            <img
+              src={builderWorkImages[selectedImageIndex]}
+              alt={`Work ${selectedImageIndex + 1}`}
+              className="max-w-full max-h-full object-contain rounded-lg"
+              onClick={closeImageGallery}
+            />
+          </div>
+
+          {/* Thumbnail Strip (Desktop) */}
+          {builderWorkImages.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 hidden md:flex gap-2 max-w-full overflow-x-auto px-4">
+              {builderWorkImages.map((image, index) => (
+                <button
+                  key={index}
+                  onClick={() => setSelectedImageIndex(index)}
+                  className={`flex-shrink-0 w-16 h-16 rounded border-2 transition-all ${
+                    index === selectedImageIndex ? 'border-white scale-110' : 'border-white/30'
+                  }`}
+                >
+                  <img
+                    src={image}
+                    alt={`Thumbnail ${index + 1}`}
+                    className="w-full h-full object-cover rounded"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
