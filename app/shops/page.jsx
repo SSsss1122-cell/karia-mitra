@@ -272,7 +272,7 @@ Please confirm the order and provide delivery details.`;
       )}
 
       {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-20">
+      <div className="bg-white border-b sticky top-0 z-40">
         <div className="max-w-6xl mx-auto p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 sm:gap-3">
@@ -523,7 +523,7 @@ Please confirm the order and provide delivery details.`;
 
       {/* Floating Cart Button for Mobile when items are in cart */}
       {selectedShop && cart.length > 0 && (
-        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-30 sm:hidden">
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50 sm:hidden">
           <button
             onClick={() => setShowCart(true)}
             className="bg-blue-500 text-white px-6 py-3 rounded-full shadow-lg hover:bg-blue-600 transition-colors flex items-center gap-2 font-semibold"
@@ -535,148 +535,143 @@ Please confirm the order and provide delivery details.`;
       )}
 
       {/* Shopping Cart Modal */}
-    {/* Shopping Cart Modal */}
-{/* Shopping Cart Modal */}
-{showCart && (
-  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-    <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 sm:p-6 text-white">
-        <div className="flex items-center justify-between">
-          <div className="max-w-[70%]">
-            <h2 className="text-lg sm:text-xl font-bold truncate">Your Order</h2>
-            <p className="text-blue-100 text-sm sm:text-base truncate">{selectedShop?.shop_name}</p>
-          </div>
-          <button
-            onClick={() => setShowCart(false)}
-            className="p-1.5 sm:p-2 hover:bg-white/20 rounded-lg transition-colors flex-shrink-0"
-          >
-            <X className="w-4 h-4 sm:w-5 sm:h-5" />
-          </button>
-        </div>
-      </div>
-
-      {/* Cart Items - Centered when empty */}
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col">
-        {cart.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center py-8 sm:py-12">
-            <ShoppingCart className="w-16 h-16 sm:w-20 sm:h-20 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-2">Your cart is empty</h3>
-            <p className="text-gray-600 text-sm sm:text-base max-w-md">
-              Add some products from {selectedShop?.shop_name} to get started
-            </p>
-            <button
-              onClick={() => setShowCart(false)}
-              className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-            >
-              Continue Shopping
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-3 sm:space-y-4">
-            {/* Clear Cart Button */}
-            <div className="flex justify-end">
-              <button
-                onClick={() => setCart([])}
-                className="flex items-center gap-2 px-3 py-2 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors shadow-sm"
-              >
-                <X className="w-4 h-4" />
-                Clear Cart
-              </button>
-            </div>
-            
-            {cart.map(item => (
-              <div key={item.id} className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-gray-50 rounded-lg">
-                <img
-                  src={item.item_image_url}
-                  alt={item.item_name}
-                  className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg flex-shrink-0"
-                  onError={(e) => handleImageError(e, item.item_name)}
-                />
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-semibold text-gray-900 text-sm sm:text-base truncate">{item.item_name}</h4>
-                  <p className="text-gray-600 text-xs sm:text-sm">₹{item.item_price} each</p>
+      {showCart && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-4 sm:p-6 text-white">
+              <div className="flex items-center justify-between">
+                <div className="max-w-[70%]">
+                  <h2 className="text-lg sm:text-xl font-bold truncate">Your Order</h2>
+                  <p className="text-blue-100 text-sm sm:text-base truncate">{selectedShop?.shop_name}</p>
                 </div>
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="flex items-center gap-1 sm:gap-2">
-                    <button
-                      onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                      className="w-6 h-6 sm:w-8 sm:h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-sm"
-                    >
-                      <Minus className="w-3 h-3 sm:w-4 sm:h-4" />
-                    </button>
-                    <span className="font-semibold w-6 sm:w-8 text-center text-sm sm:text-base text-gray-900 bg-white border border-gray-300 rounded-md py-1">
-                      {item.quantity}
-                    </span>
-                    <button
-                      onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                      className="w-6 h-6 sm:w-8 sm:h-8 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600 transition-colors shadow-sm"
-                    >
-                      <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
-                    </button>
-                  </div>
-                  <div className="text-right min-w-16 sm:min-w-20">
-                    <p className="font-bold text-gray-900 text-sm sm:text-base">₹{item.item_price * item.quantity}</p>
-                  </div>
+                <button
+                  onClick={() => setShowCart(false)}
+                  className="p-1.5 sm:p-2 hover:bg-white/20 rounded-lg transition-colors flex-shrink-0"
+                >
+                  <X className="w-4 h-4 sm:w-5 sm:h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Cart Items - Centered when empty */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col">
+              {cart.length === 0 ? (
+                <div className="flex-1 flex flex-col items-center justify-center text-center py-8 sm:py-12">
+                  <ShoppingCart className="w-16 h-16 sm:w-20 sm:h-20 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-2">Your cart is empty</h3>
+                  <p className="text-gray-600 text-sm sm:text-base max-w-md">
+                    Add some products from {selectedShop?.shop_name} to get started
+                  </p>
                   <button
-                    onClick={() => removeFromCart(item.id)}
-                    className="p-1.5 bg-red-100 text-red-600 hover:bg-red-200 rounded-lg transition-colors flex-shrink-0"
+                    onClick={() => setShowCart(false)}
+                    className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                   >
-                    <X className="w-3 h-3 sm:w-4 sm:h-4" />
+                    Continue Shopping
                   </button>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ) : (
+                <div className="space-y-3 sm:space-y-4">
+                  {/* Clear Cart Button */}
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() => setCart([])}
+                      className="flex items-center gap-2 px-3 py-2 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 transition-colors shadow-sm"
+                    >
+                      <X className="w-4 h-4" />
+                      Clear Cart
+                    </button>
+                  </div>
+                  
+                  {cart.map(item => (
+                    <div key={item.id} className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-gray-50 rounded-lg">
+                      <img
+                        src={item.item_image_url}
+                        alt={item.item_name}
+                        className="w-12 h-12 sm:w-16 sm:h-16 object-cover rounded-lg flex-shrink-0"
+                        onError={(e) => handleImageError(e, item.item_name)}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-gray-900 text-sm sm:text-base truncate">{item.item_name}</h4>
+                        <p className="text-gray-600 text-xs sm:text-sm">₹{item.item_price} each</p>
+                      </div>
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <div className="flex items-center gap-1 sm:gap-2">
+                          <button
+                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            className="w-6 h-6 sm:w-8 sm:h-8 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors shadow-sm"
+                          >
+                            <Minus className="w-3 h-3 sm:w-4 sm:h-4" />
+                          </button>
+                          <span className="font-semibold w-6 sm:w-8 text-center text-sm sm:text-base text-gray-900 bg-white border border-gray-300 rounded-md py-1">
+                            {item.quantity}
+                          </span>
+                          <button
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            className="w-6 h-6 sm:w-8 sm:h-8 bg-green-500 text-white rounded-full flex items-center justify-center hover:bg-green-600 transition-colors shadow-sm"
+                          >
+                            <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+                          </button>
+                        </div>
+                        <div className="text-right min-w-16 sm:min-w-20">
+                          <p className="font-bold text-gray-900 text-sm sm:text-base">₹{item.item_price * item.quantity}</p>
+                        </div>
+                        <button
+                          onClick={() => removeFromCart(item.id)}
+                          className="p-1.5 bg-red-100 text-red-600 hover:bg-red-200 rounded-lg transition-colors flex-shrink-0"
+                        >
+                          <X className="w-3 h-3 sm:w-4 sm:h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
-      {/* Footer */}
-    {/* Footer - Alternative Layout */}
-{cart.length > 0 && (
-  <div className="border-t p-4 sm:p-6 space-y-3 sm:space-y-4">
-    <div className="flex justify-between items-center text-base sm:text-lg font-bold">
-      <span>Total Amount:</span>
-      <span className="flex items-center gap-1">
-        <IndianRupee className="w-4 h-4 sm:w-5 sm:h-5" />
-        {getTotalPrice()}
-      </span>
-    </div>
-    
-    <div className="grid grid-cols-3 gap-3">
-      <button
-        onClick={() => setCart([])}
-        className="bg-gray-500 text-white py-3 px-2 rounded-xl font-semibold hover:bg-gray-600 transition-colors flex items-center justify-center gap-1 text-xs sm:text-sm shadow-md"
-      >
-        <X className="w-3 h-3 sm:w-4 sm:h-4" />
-        <span className="truncate">Clear</span>
-      </button>
-      <button
-        onClick={() => window.open(`tel:${mediatorNumber}`, '_self')}
-        className="bg-blue-500 text-white py-3 px-2 rounded-xl font-semibold hover:bg-blue-600 transition-colors flex items-center justify-center gap-1 text-xs sm:text-sm shadow-lg"
-      >
-        <Phone className="w-3 h-3 sm:w-4 sm:h-4" />
-        <span className="truncate">Call</span>
-      </button>
-      <button
-        onClick={handleWhatsAppOrder}
-        className="bg-green-500 text-white py-3 px-2 rounded-xl font-semibold hover:bg-green-600 transition-colors flex items-center justify-center gap-1 text-xs sm:text-sm shadow-lg"
-      >
-        <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4" />
-        <span className="truncate">WhatsApp</span>
-      </button>
-    </div>
-    
-    <p className="text-center text-xs sm:text-sm text-gray-500">
-      Contact us via call or WhatsApp to complete your order
-    </p>
-  </div>
-)}
-    
-    </div>
-  </div>
-)}
-    
+            {/* Footer */}
+            {cart.length > 0 && (
+              <div className="border-t p-4 sm:p-6 space-y-3 sm:space-y-4">
+                <div className="flex justify-between items-center text-base sm:text-lg font-bold">
+                  <span>Total Amount:</span>
+                  <span className="flex items-center gap-1">
+                    <IndianRupee className="w-4 h-4 sm:w-5 sm:h-5" />
+                    {getTotalPrice()}
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-3 gap-3">
+                  <button
+                    onClick={() => setCart([])}
+                    className="bg-gray-500 text-white py-3 px-2 rounded-xl font-semibold hover:bg-gray-600 transition-colors flex items-center justify-center gap-1 text-xs sm:text-sm shadow-md"
+                  >
+                    <X className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="truncate">Clear</span>
+                  </button>
+                  <button
+                    onClick={() => window.open(`tel:${mediatorNumber}`, '_self')}
+                    className="bg-blue-500 text-white py-3 px-2 rounded-xl font-semibold hover:bg-blue-600 transition-colors flex items-center justify-center gap-1 text-xs sm:text-sm shadow-lg"
+                  >
+                    <Phone className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="truncate">Call</span>
+                  </button>
+                  <button
+                    onClick={handleWhatsAppOrder}
+                    className="bg-green-500 text-white py-3 px-2 rounded-xl font-semibold hover:bg-green-600 transition-colors flex items-center justify-center gap-1 text-xs sm:text-sm shadow-lg"
+                  >
+                    <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                    <span className="truncate">WhatsApp</span>
+                  </button>
+                </div>
+                
+                <p className="text-center text-xs sm:text-sm text-gray-500">
+                  Contact us via call or WhatsApp to complete your order
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
