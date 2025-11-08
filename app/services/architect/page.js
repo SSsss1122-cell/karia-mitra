@@ -248,7 +248,7 @@ export default function ArchitecturePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20"> {/* Added pb-20 for bottom spacing */}
       {/* Header */}
       <div className="bg-white p-4 border-b sticky top-0 z-10">
         <div className="max-w-6xl mx-auto">
@@ -264,8 +264,8 @@ export default function ArchitecturePage() {
         </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-6xl mx-auto p-4">
+      {/* Content with bottom spacing */}
+      <div className="max-w-6xl mx-auto p-4 pb-8"> {/* Added pb-8 for extra bottom spacing */}
         {/* Architects List - Mobile Responsive */}
         <div className="space-y-3 md:space-y-4">
           {architects.length === 0 ? (
@@ -321,174 +321,173 @@ export default function ArchitecturePage() {
       </div>
 
       {/* Architect Detail Modal - Mobile Responsive */}
-     {/* Architect Detail Modal - Mobile Responsive */}
-{selectedArchitect && (
-  <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-    <div className="bg-white rounded-t-3xl sm:rounded-2xl w-full h-[90vh] sm:h-auto sm:max-h-[90vh] max-w-4xl flex flex-col">
-      {/* Header - Sticky */}
-      <div className="relative bg-gradient-to-r from-blue-500 to-purple-600 p-4 sm:p-6 flex-shrink-0">
-        <div className="flex items-start gap-3 sm:gap-4">
-          <img
-            src={selectedArchitect.image_url || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop"}
-            alt={selectedArchitect.name}
-            className="w-14 h-14 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-white shadow-lg flex-shrink-0"
-          />
-          <div className="text-white flex-1 min-w-0">
-            <h2 className="text-lg sm:text-2xl font-bold truncate">{selectedArchitect.name}</h2>
-            <p className="text-blue-100 text-sm sm:text-base">Professional Architect</p>
-            <div className="flex items-center gap-2 mt-1">
-              <Star className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-300 fill-current" />
-              <span className="text-sm sm:text-base">{selectedArchitect.rating || 'New'}</span>
-            </div>
-          </div>
-        </div>
-        <button
-          onClick={() => {
-            setSelectedArchitect(null);
-            setArchitectWorkImages([]);
-          }}
-          className="absolute top-3 right-3 sm:top-4 sm:right-4 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
-        >
-          <X className="w-4 h-4 text-white" />
-        </button>
-      </div>
-
-      {/* Scrollable Content - Increased bottom padding */}
-      <div className="flex-1 overflow-y-auto py-6 sm:py-8 px-4 sm:px-6 pb-32">
-        {/* Stats Grid - Mobile Responsive */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 mb-6 sm:mb-8">
-          {selectedArchitect.experience && (
-            <div className="flex items-center gap-2 sm:gap-3 bg-blue-50 border border-blue-200 rounded-lg p-2 sm:p-3">
-              <Briefcase className="w-4 h-4 sm:w-6 sm:h-6 text-blue-600 flex-shrink-0" />
-              <div className="min-w-0">
-                <p className="text-xs text-blue-600 font-medium truncate">Experience</p>
-                <p className="font-bold text-gray-900 text-sm truncate">{selectedArchitect.experience}</p>
-              </div>
-            </div>
-          )}
-          {selectedArchitect.rate && (
-            <div className="flex items-center gap-2 sm:gap-3 bg-green-50 border border-green-200 rounded-lg p-2 sm:p-3">
-              <Award className="w-4 h-4 sm:w-6 sm:h-6 text-green-600 flex-shrink-0" />
-              <div className="min-w-0">
-                <p className="text-xs text-green-600 font-medium truncate">Rate</p>
-                <p className="font-bold text-gray-900 text-sm truncate">₹{selectedArchitect.rate}/sq.ft</p>
-              </div>
-            </div>
-          )}
-          {selectedArchitect.category && (
-            <div className="flex items-center gap-2 sm:gap-3 bg-orange-50 border border-orange-200 rounded-lg p-2 sm:p-3">
-              <Clock className="w-4 h-4 sm:w-6 sm:h-6 text-orange-600 flex-shrink-0" />
-              <div className="min-w-0">
-                <p className="text-xs text-orange-600 font-medium truncate">Category</p>
-                <p className="font-bold text-green-600 text-sm truncate capitalize">{selectedArchitect.category}</p>
-              </div>
-            </div>
-          )}
-          <div className="flex items-center gap-2 sm:gap-3 bg-purple-50 border border-purple-200 rounded-lg p-2 sm:p-3">
-            <Star className="w-4 h-4 sm:w-6 sm:h-6 text-purple-600 flex-shrink-0" />
-            <div className="min-w-0">
-              <p className="text-xs text-purple-600 font-medium truncate">Rating</p>
-              <p className="font-bold text-gray-900 text-sm truncate">{selectedArchitect.rating || 'New'}</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Specialization Section */}
-        {selectedArchitect.specialization && (
-          <div className="mb-6 sm:mb-8">
-            <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-3">Specialization</h3>
-            <div className="flex flex-wrap gap-2">
-              <span className="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-sm">
-                {selectedArchitect.specialization}
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* Work Images Section - Mobile Responsive */}
-        {loadingWorkImages ? (
-          <div className="mb-6 sm:mb-8">
-            <div className="flex items-center gap-2 mb-3 sm:mb-4">
-              <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
-              <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Loading Work Photos...</h3>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
-              {[1, 2, 3].map((item) => (
-                <div key={item} className="w-full aspect-video bg-gray-200 rounded-lg animate-pulse"></div>
-              ))}
-            </div>
-          </div>
-        ) : architectWorkImages.length > 0 ? (
-          <div className="mb-6 sm:mb-8">
-            <div className="flex items-center gap-2 mb-3 sm:mb-4">
-              <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
-              <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
-                Previous Work Photos ({architectWorkImages.length})
-              </h3>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
-              {architectWorkImages.map((imageUrl, index) => (
-                <div 
-                  key={index} 
-                  className="relative cursor-pointer group"
-                  onClick={() => openImageGallery(index)}
-                >
-                  <img
-                    src={imageUrl}
-                    alt={`Work ${index + 1}`}
-                    className="w-full aspect-video object-cover rounded-lg border group-hover:opacity-80 transition-opacity duration-200"
-                    onError={(e) => {
-                      console.error("Failed to load image:", imageUrl);
-                      e.target.style.display = 'none';
-                    }}
-                    onLoad={() => console.log("Successfully loaded image:", imageUrl)}
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 rounded-lg flex items-center justify-center">
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white/90 rounded-full p-2">
-                      <ImageIcon className="w-4 h-4 text-gray-700" />
-                    </div>
+      {selectedArchitect && (
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+          <div className="bg-white rounded-t-3xl sm:rounded-2xl w-full h-[90vh] sm:h-auto sm:max-h-[90vh] max-w-4xl flex flex-col">
+            {/* Header - Sticky */}
+            <div className="relative bg-gradient-to-r from-blue-500 to-purple-600 p-4 sm:p-6 flex-shrink-0">
+              <div className="flex items-start gap-3 sm:gap-4">
+                <img
+                  src={selectedArchitect.image_url || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop"}
+                  alt={selectedArchitect.name}
+                  className="w-14 h-14 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-white shadow-lg flex-shrink-0"
+                />
+                <div className="text-white flex-1 min-w-0">
+                  <h2 className="text-lg sm:text-2xl font-bold truncate">{selectedArchitect.name}</h2>
+                  <p className="text-blue-100 text-sm sm:text-base">Professional Architect</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Star className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-300 fill-current" />
+                    <span className="text-sm sm:text-base">{selectedArchitect.rating || 'New'}</span>
                   </div>
                 </div>
-              ))}
+              </div>
+              <button
+                onClick={() => {
+                  setSelectedArchitect(null);
+                  setArchitectWorkImages([]);
+                }}
+                className="absolute top-3 right-3 sm:top-4 sm:right-4 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+              >
+                <X className="w-4 h-4 text-white" />
+              </button>
+            </div>
+
+            {/* Scrollable Content - Increased bottom padding */}
+            <div className="flex-1 overflow-y-auto py-6 sm:py-8 px-4 sm:px-6 pb-32">
+              {/* Stats Grid - Mobile Responsive */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 mb-6 sm:mb-8">
+                {selectedArchitect.experience && (
+                  <div className="flex items-center gap-2 sm:gap-3 bg-blue-50 border border-blue-200 rounded-lg p-2 sm:p-3">
+                    <Briefcase className="w-4 h-4 sm:w-6 sm:h-6 text-blue-600 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs text-blue-600 font-medium truncate">Experience</p>
+                      <p className="font-bold text-gray-900 text-sm truncate">{selectedArchitect.experience}</p>
+                    </div>
+                  </div>
+                )}
+                {selectedArchitect.rate && (
+                  <div className="flex items-center gap-2 sm:gap-3 bg-green-50 border border-green-200 rounded-lg p-2 sm:p-3">
+                    <Award className="w-4 h-4 sm:w-6 sm:h-6 text-green-600 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs text-green-600 font-medium truncate">Rate</p>
+                      <p className="font-bold text-gray-900 text-sm truncate">₹{selectedArchitect.rate}/sq.ft</p>
+                    </div>
+                  </div>
+                )}
+                {selectedArchitect.category && (
+                  <div className="flex items-center gap-2 sm:gap-3 bg-orange-50 border border-orange-200 rounded-lg p-2 sm:p-3">
+                    <Clock className="w-4 h-4 sm:w-6 sm:h-6 text-orange-600 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-xs text-orange-600 font-medium truncate">Category</p>
+                      <p className="font-bold text-green-600 text-sm truncate capitalize">{selectedArchitect.category}</p>
+                    </div>
+                  </div>
+                )}
+                <div className="flex items-center gap-2 sm:gap-3 bg-purple-50 border border-purple-200 rounded-lg p-2 sm:p-3">
+                  <Star className="w-4 h-4 sm:w-6 sm:h-6 text-purple-600 flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-xs text-purple-600 font-medium truncate">Rating</p>
+                    <p className="font-bold text-gray-900 text-sm truncate">{selectedArchitect.rating || 'New'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Specialization Section */}
+              {selectedArchitect.specialization && (
+                <div className="mb-6 sm:mb-8">
+                  <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-3">Specialization</h3>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-sm">
+                      {selectedArchitect.specialization}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Work Images Section - Mobile Responsive */}
+              {loadingWorkImages ? (
+                <div className="mb-6 sm:mb-8">
+                  <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                    <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+                    <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Loading Work Photos...</h3>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
+                    {[1, 2, 3].map((item) => (
+                      <div key={item} className="w-full aspect-video bg-gray-200 rounded-lg animate-pulse"></div>
+                    ))}
+                  </div>
+                </div>
+              ) : architectWorkImages.length > 0 ? (
+                <div className="mb-6 sm:mb-8">
+                  <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                    <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
+                    <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
+                      Previous Work Photos ({architectWorkImages.length})
+                    </h3>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
+                    {architectWorkImages.map((imageUrl, index) => (
+                      <div 
+                        key={index} 
+                        className="relative cursor-pointer group"
+                        onClick={() => openImageGallery(index)}
+                      >
+                        <img
+                          src={imageUrl}
+                          alt={`Work ${index + 1}`}
+                          className="w-full aspect-video object-cover rounded-lg border group-hover:opacity-80 transition-opacity duration-200"
+                          onError={(e) => {
+                            console.error("Failed to load image:", imageUrl);
+                            e.target.style.display = 'none';
+                          }}
+                          onLoad={() => console.log("Successfully loaded image:", imageUrl)}
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 rounded-lg flex items-center justify-center">
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white/90 rounded-full p-2">
+                            <ImageIcon className="w-4 h-4 text-gray-700" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="mb-6 sm:mb-8 text-center py-6 text-gray-500 text-sm sm:text-base">
+                  No work photos available
+                </div>
+              )}
+
+              {/* About Section - Mobile Responsive */}
+              {selectedArchitect.about && (
+                <div className="mb-6 sm:mb-8">
+                  <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-3">About</h3>
+                  <p className="text-gray-600 text-sm sm:text-base leading-relaxed">{selectedArchitect.about}</p>
+                </div>
+              )}
+
+              {/* Action Buttons - With significant spacing */}
+              <div className="mt-16 mb-16">
+                <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
+                  <button
+                    onClick={() => handleWhatsAppBooking(selectedArchitect)}
+                    className="bg-green-500 text-white py-4 px-6 rounded-xl font-semibold flex items-center justify-center gap-3 hover:bg-green-600 transition-colors text-base shadow-lg"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    <span>WhatsApp</span>
+                  </button>
+                  <button
+                    onClick={() => window.location.href = `tel:${selectedArchitect.Phone || mediatorNumber}`}
+                    className="bg-blue-500 text-white py-4 px-6 rounded-xl font-semibold flex items-center justify-center gap-3 hover:bg-blue-600 transition-colors text-base shadow-lg"
+                  >
+                    <Phone className="w-5 h-5" />
+                    <span>Call</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
-        ) : (
-          <div className="mb-6 sm:mb-8 text-center py-6 text-gray-500 text-sm sm:text-base">
-            No work photos available
-          </div>
-        )}
-
-        {/* About Section - Mobile Responsive */}
-        {selectedArchitect.about && (
-          <div className="mb-6 sm:mb-8">
-            <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-3">About</h3>
-            <p className="text-gray-600 text-sm sm:text-base leading-relaxed">{selectedArchitect.about}</p>
-          </div>
-        )}
-
-        {/* Action Buttons - With significant spacing */}
-        <div className="mt-16 mb-16">
-          <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
-            <button
-              onClick={() => handleWhatsAppBooking(selectedArchitect)}
-              className="bg-green-500 text-white py-4 px-6 rounded-xl font-semibold flex items-center justify-center gap-3 hover:bg-green-600 transition-colors text-base shadow-lg"
-            >
-              <MessageCircle className="w-5 h-5" />
-              <span>WhatsApp</span>
-            </button>
-            <button
-              onClick={() => window.location.href = `tel:${selectedArchitect.Phone || mediatorNumber}`}
-              className="bg-blue-500 text-white py-4 px-6 rounded-xl font-semibold flex items-center justify-center gap-3 hover:bg-blue-600 transition-colors text-base shadow-lg"
-            >
-              <Phone className="w-5 h-5" />
-              <span>Call</span>
-            </button>
-          </div>
         </div>
-      </div>
-    </div>
-  </div>
-)}
+      )}
 
       {/* Image Gallery Modal */}
       {isGalleryOpen && selectedImageIndex !== null && (
