@@ -1,84 +1,80 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { supabase } from "../../lib/supabase";
-import { Phone, MessageCircle, X, Star, MapPin, ArrowLeft, Briefcase, Award, Clock, Image as ImageIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useState } from 'react';
+import { supabase } from '../../lib/supabase';
+import { 
+  ArrowLeft, 
+  Star, 
+  MapPin, 
+  Phone, 
+  MessageCircle, 
+  X, 
+  Briefcase, 
+  Award, 
+  Clock,
+  Image as ImageIcon,
+  ChevronLeft,
+  ChevronRight,
+  Building
+} from 'lucide-react';
 
-export default function ContractorsPage() {
-  const contractorTypes = [
-    { 
-      name: "POP", 
-      image: "https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=300&h=200&fit=crop" 
-    },
-    { 
-      name: "RCC", 
-      image: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=300&h=200&fit=crop" 
-    },
-    { 
-      name: "Electrician", 
-      image: "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=300&h=200&fit=crop" 
-    },
-    { 
-      name: "Plumbing", 
-      image: "https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=300&h=200&fit=crop" 
-    },
-    { 
-      name: "Painter", 
-      image: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=300&h=200&fit=crop" 
-    }
-  ];
-  
-  const [selectedType, setSelectedType] = useState(null);
-  const [contractors, setContractors] = useState([]);
-  const [selectedContractor, setSelectedContractor] = useState(null);
-  const [contractorWorkImages, setContractorWorkImages] = useState([]);
+export default function ArchitecturePage() {
+  const [architects, setArchitects] = useState([]);
+  const [selectedArchitect, setSelectedArchitect] = useState(null);
+  const [architectWorkImages, setArchitectWorkImages] = useState([]);
   const [loadingWorkImages, setLoadingWorkImages] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(null);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const mediatorNumber = "9480072737";
 
   useEffect(() => {
-    const fetchContractors = async () => {
-      if (!selectedType) return;
+    const fetchArchitects = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('architecture')
+          .select('*')
+          .order('rating', { ascending: false });
 
-      const { data, error } = await supabase
-        .from("Contractor")
-        .select("id, name, expertise, rating, location, about, experience, site_completed, rate, image_url, phone")
-        .eq("expertise", selectedType)
-        .eq("is_active", true)
-        .order("rating", { ascending: false });
+        if (error) throw error;
 
-      if (!error) {
-        setContractors(data || []);
+        console.log('Fetched architects from database:', data);
+        setArchitects(data || []);
+      } catch (err) {
+        console.error('Error fetching architects:', err);
+        setArchitects([]);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchContractors();
-  }, [selectedType]);
+    fetchArchitects();
+  }, []);
 
-  const fetchContractorWorkImages = async (contractorId) => {
+  const fetchArchitectWorkImages = async (architectId) => {
     setLoadingWorkImages(true);
-    setContractorWorkImages([]);
+    setArchitectWorkImages([]);
     
     try {
-      console.log("=== FETCHING WORK IMAGES FOR CONTRACTOR:", contractorId, "===");
+      console.log("=== FETCHING WORK IMAGES FOR ARCHITECT:", architectId, "===");
       
-      // First, check if contractor has work images in database works field
-      const { data: contractorData, error: dbError } = await supabase
-        .from('Contractor')
+      // First, check if architect has work images in database works field
+      const { data: architectData, error: dbError } = await supabase
+        .from('architecture')
         .select('works')
-        .eq('id', contractorId)
+        .eq('id', architectId)
         .single();
 
-      if (!dbError && contractorData.works && Array.isArray(contractorData.works)) {
-        const validDbImages = contractorData.works.filter(url => 
+      if (!dbError && architectData.works && Array.isArray(architectData.works)) {
+        const validDbImages = architectData.works.filter(url => 
           url && typeof url === 'string' && url.trim() !== '' && url.startsWith('http')
         );
         
         if (validDbImages.length > 0) {
           console.log("Found work images in database:", validDbImages);
-          setContractorWorkImages(validDbImages);
+          setArchitectWorkImages(validDbImages);
           setLoadingWorkImages(false);
           return;
         }
@@ -99,7 +95,7 @@ export default function ContractorsPage() {
 
       if (listError) {
         console.error("Error listing work-images folder:", listError);
-        setContractorWorkImages([]);
+        setArchitectWorkImages([]);
         setLoadingWorkImages(false);
         return;
       }
@@ -108,33 +104,33 @@ export default function ContractorsPage() {
 
       if (!files || files.length === 0) {
         console.log("No files found in work-images folder");
-        setContractorWorkImages([]);
+        setArchitectWorkImages([]);
         setLoadingWorkImages(false);
         return;
       }
 
-      // Filter files for this specific contractor
-      const contractorFiles = files.filter(file => {
+      // Filter files for this specific architect
+      const architectFiles = files.filter(file => {
         const fileName = file.name.toLowerCase();
         
-        // Pattern for contractor work images
-        const contractorPatterns = [
-          `work_contractor_${contractorId}_`,
-          `contractor_${contractorId}_`,
-          `work_contractor${contractorId}_`,
-          `contractor${contractorId}_`
+        // Pattern for architect work images
+        const architectPatterns = [
+          `work_architect_${architectId}_`,
+          `architect_${architectId}_`,
+          `work_architect${architectId}_`,
+          `architect${architectId}_`
         ];
 
-        return contractorPatterns.some(pattern => 
+        return architectPatterns.some(pattern => 
           fileName.includes(pattern.toLowerCase())
         );
       });
 
-      console.log(`Found ${contractorFiles.length} work images for contractor ${contractorId}:`, contractorFiles);
+      console.log(`Found ${architectFiles.length} work images for architect ${architectId}:`, architectFiles);
 
       // Get public URLs for matching files
       const workImageUrls = [];
-      for (const file of contractorFiles) {
+      for (const file of architectFiles) {
         const { data: { publicUrl } } = supabase.storage
           .from('partner-profile')
           .getPublicUrl(`work-images/${file.name}`);
@@ -144,23 +140,23 @@ export default function ContractorsPage() {
       }
 
       console.log("Final work image URLs:", workImageUrls);
-      setContractorWorkImages(workImageUrls);
+      setArchitectWorkImages(workImageUrls);
 
     } catch (error) {
-      console.error("Error in fetchContractorWorkImages:", error);
-      setContractorWorkImages([]);
+      console.error("Error in fetchArchitectWorkImages:", error);
+      setArchitectWorkImages([]);
     } finally {
       setLoadingWorkImages(false);
     }
   };
 
-  const handleContractorClick = async (contractor) => {
-    setSelectedContractor(contractor);
-    await fetchContractorWorkImages(contractor.id);
+  const handleArchitectClick = async (architect) => {
+    setSelectedArchitect(architect);
+    await fetchArchitectWorkImages(architect.id);
   };
 
-  const handleWhatsAppBooking = (contractor) => {
-    const message = `Hi Karia Mitra, I want to book ${contractor.name} (${contractor.expertise}). Please share their details.`;
+  const handleWhatsAppBooking = (architect) => {
+    const message = `Hi Karia Mitra, I want to book ${architect.name} (Architect). Please share their details.`;
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/${mediatorNumber}?text=${encodedMessage}`, '_blank');
   };
@@ -177,13 +173,13 @@ export default function ContractorsPage() {
 
   const goToNextImage = () => {
     setSelectedImageIndex((prev) => 
-      prev === contractorWorkImages.length - 1 ? 0 : prev + 1
+      prev === architectWorkImages.length - 1 ? 0 : prev + 1
     );
   };
 
   const goToPrevImage = () => {
     setSelectedImageIndex((prev) => 
-      prev === 0 ? contractorWorkImages.length - 1 : prev - 1
+      prev === 0 ? architectWorkImages.length - 1 : prev - 1
     );
   };
 
@@ -205,125 +201,132 @@ export default function ContractorsPage() {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isGalleryOpen]);
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="bg-white p-4 border-b">
+          <div className="max-w-6xl mx-auto">
+            <h1 className="text-lg md:text-xl font-bold text-gray-900 text-center">Architecture Experts</h1>
+          </div>
+        </div>
+        <div className="max-w-6xl mx-auto p-4">
+          <div className="space-y-4">
+            {[1, 2, 3].map((item) => (
+              <div key={item} className="bg-white rounded-xl shadow-sm border p-4 animate-pulse">
+                <div className="flex items-start gap-4">
+                  <div className="w-16 h-16 bg-gray-200 rounded-full"></div>
+                  <div className="flex-1 space-y-2">
+                    <div className="w-3/4 h-4 bg-gray-200 rounded"></div>
+                    <div className="w-1/2 h-3 bg-gray-200 rounded"></div>
+                    <div className="w-2/3 h-3 bg-gray-200 rounded"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white p-4 border-b sticky top-0 z-10">
         <div className="max-w-6xl mx-auto">
-          {selectedType ? (
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => {
-                  setSelectedType(null);
-                  setContractors([]);
-                }}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5" />
-              </button>
-              <h1 className="text-lg md:text-xl font-bold text-gray-900 truncate">{selectedType} Contractors</h1>
-            </div>
-          ) : (
-            <h1 className="text-lg md:text-xl font-bold text-gray-900 text-center">Choose Service</h1>
-          )}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => window.history.back()}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+            <h1 className="text-lg md:text-xl font-bold text-gray-900">Architecture Experts</h1>
+          </div>
         </div>
       </div>
 
       {/* Content */}
       <div className="max-w-6xl mx-auto p-4">
-        {!selectedType ? (
-          // Service Selection Grid - Mobile Responsive
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-4">
-            {contractorTypes.map((type) => (
-              <button
-                key={type.name}
-                onClick={() => setSelectedType(type.name)}
-                className="relative rounded-xl overflow-hidden shadow-sm border hover:shadow-md transition-all duration-200 aspect-square w-full group"
+        {/* Architects List - Mobile Responsive */}
+        <div className="space-y-3 md:space-y-4">
+          {architects.length === 0 ? (
+            <div className="text-center py-8 md:py-12">
+              <Building className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500 text-lg">No architects found</p>
+            </div>
+          ) : (
+            architects.map((architect) => (
+              <div
+                key={architect.id}
+                onClick={() => handleArchitectClick(architect)}
+                className="bg-white rounded-xl shadow-sm border p-4 hover:shadow-md transition-all duration-200 cursor-pointer active:scale-[0.98]"
               >
-                <img
-                  src={type.image}
-                  alt={type.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                />
-                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 flex items-center justify-center transition-colors">
-                  <h3 className="text-white font-bold text-sm md:text-lg">{type.name}</h3>
-                </div>
-              </button>
-            ))}
-          </div>
-        ) : (
-          // Contractors List - Mobile Responsive
-          <div className="space-y-3 md:space-y-4">
-            {contractors.length === 0 ? (
-              <div className="text-center py-8 md:py-12">
-                <p className="text-gray-500 text-lg">No contractors found for {selectedType}</p>
-              </div>
-            ) : (
-              contractors.map((contractor) => (
-                <div
-                  key={contractor.id}
-                  onClick={() => handleContractorClick(contractor)}
-                  className="bg-white rounded-xl shadow-sm border p-4 hover:shadow-md transition-all duration-200 cursor-pointer active:scale-[0.98]"
-                >
-                  <div className="flex items-start gap-3 md:gap-4">
-                    <img
-                      src={contractor.image_url || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop"}
-                      alt={contractor.name}
-                      className="w-12 h-12 md:w-16 md:h-16 rounded-full object-cover border-2 border-gray-200 flex-shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                        <h3 className="font-semibold text-gray-900 text-base md:text-lg truncate">{contractor.name}</h3>
-                        {contractor.rate && (
-                          <p className="text-green-600 font-semibold text-sm md:text-base whitespace-nowrap">₹{contractor.rate}/hr</p>
-                        )}
+                <div className="flex items-start gap-3 md:gap-4">
+                  <img
+                    src={architect.image_url || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop"}
+                    alt={architect.name}
+                    className="w-12 h-12 md:w-16 md:h-16 rounded-full object-cover border-2 border-gray-200 flex-shrink-0"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                      <h3 className="font-semibold text-gray-900 text-base md:text-lg truncate">{architect.name}</h3>
+                      <span className="text-green-600 font-semibold text-sm md:text-base whitespace-nowrap capitalize">
+                        {architect.category}
+                      </span>
+                    </div>
+                    <p className="text-gray-600 text-sm md:text-base">Professional Architect</p>
+                    <div className="flex flex-wrap items-center gap-1 md:gap-2 mt-2">
+                      <div className="flex items-center gap-1">
+                        <Star className="w-3 h-3 md:w-4 md:h-4 text-yellow-400 fill-current" />
+                        <span className="text-xs md:text-sm text-gray-600">{architect.rating || 'New'}</span>
                       </div>
-                      <p className="text-gray-600 text-sm md:text-base">{contractor.expertise}</p>
-                      <div className="flex flex-wrap items-center gap-1 md:gap-2 mt-2">
-                        <div className="flex items-center gap-1">
-                          <Star className="w-3 h-3 md:w-4 md:h-4 text-yellow-400 fill-current" />
-                          <span className="text-xs md:text-sm text-gray-600">{contractor.rating || 'New'}</span>
-                        </div>
-                        <span className="text-gray-300 mx-1">•</span>
-                        <div className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3 md:w-4 md:h-4 text-gray-400" />
-                          <span className="text-xs md:text-sm text-gray-600 truncate">{contractor.location}</span>
-                        </div>
+                      <span className="text-gray-300 mx-1">•</span>
+                      <div className="flex items-center gap-1">
+                        <MapPin className="w-3 h-3 md:w-4 md:h-4 text-gray-400" />
+                        <span className="text-xs md:text-sm text-gray-600 truncate">{architect.location}</span>
                       </div>
                     </div>
+                    {architect.specialization && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        <span className="px-2 py-1 bg-blue-100 text-blue-600 rounded-full text-xs">
+                          {architect.specialization}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
-              ))
-            )}
-          </div>
-        )}
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
-      {/* Contractor Detail Modal - Mobile Responsive */}
-      {selectedContractor && (
+      {/* Architect Detail Modal - Mobile Responsive */}
+      {selectedArchitect && (
         <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
           <div className="bg-white rounded-t-3xl sm:rounded-2xl w-full h-[90vh] sm:h-auto sm:max-h-[90vh] max-w-4xl flex flex-col">
             {/* Header - Sticky */}
             <div className="relative bg-gradient-to-r from-blue-500 to-purple-600 p-4 sm:p-6 flex-shrink-0">
               <div className="flex items-start gap-3 sm:gap-4">
                 <img
-                  src={selectedContractor.image_url || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop"}
-                  alt={selectedContractor.name}
+                  src={selectedArchitect.image_url || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop"}
+                  alt={selectedArchitect.name}
                   className="w-14 h-14 sm:w-20 sm:h-20 rounded-full object-cover border-4 border-white shadow-lg flex-shrink-0"
                 />
                 <div className="text-white flex-1 min-w-0">
-                  <h2 className="text-lg sm:text-2xl font-bold truncate">{selectedContractor.name}</h2>
-                  <p className="text-blue-100 text-sm sm:text-base">{selectedContractor.expertise}</p>
+                  <h2 className="text-lg sm:text-2xl font-bold truncate">{selectedArchitect.name}</h2>
+                  <p className="text-blue-100 text-sm sm:text-base">Professional Architect</p>
                   <div className="flex items-center gap-2 mt-1">
                     <Star className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-300 fill-current" />
-                    <span className="text-sm sm:text-base">{selectedContractor.rating || 'New'}</span>
+                    <span className="text-sm sm:text-base">{selectedArchitect.rating || 'New'}</span>
                   </div>
                 </div>
               </div>
               <button
                 onClick={() => {
-                  setSelectedContractor(null);
-                  setContractorWorkImages([]);
+                  setSelectedArchitect(null);
+                  setArchitectWorkImages([]);
                 }}
                 className="absolute top-3 right-3 sm:top-4 sm:right-4 w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
               >
@@ -332,33 +335,33 @@ export default function ContractorsPage() {
             </div>
 
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-20 sm:pb-8"> {/* Increased bottom padding to 20 (80px) */}
+            <div className="flex-1 overflow-y-auto py-6 sm:py-8 px-4 sm:px-6">
               {/* Stats Grid - Mobile Responsive */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6">
-                {selectedContractor.experience && (
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 mb-6 sm:mb-8">
+                {selectedArchitect.experience && (
                   <div className="flex items-center gap-2 sm:gap-3 bg-blue-50 border border-blue-200 rounded-lg p-2 sm:p-3">
                     <Briefcase className="w-4 h-4 sm:w-6 sm:h-6 text-blue-600 flex-shrink-0" />
                     <div className="min-w-0">
                       <p className="text-xs text-blue-600 font-medium truncate">Experience</p>
-                      <p className="font-bold text-gray-900 text-sm truncate">{selectedContractor.experience}</p>
+                      <p className="font-bold text-gray-900 text-sm truncate">{selectedArchitect.experience}</p>
                     </div>
                   </div>
                 )}
-                {selectedContractor.site_completed && (
+                {selectedArchitect.rate && (
                   <div className="flex items-center gap-2 sm:gap-3 bg-green-50 border border-green-200 rounded-lg p-2 sm:p-3">
                     <Award className="w-4 h-4 sm:w-6 sm:h-6 text-green-600 flex-shrink-0" />
                     <div className="min-w-0">
-                      <p className="text-xs text-green-600 font-medium truncate">Projects</p>
-                      <p className="font-bold text-gray-900 text-sm truncate">{selectedContractor.site_completed}</p>
+                      <p className="text-xs text-green-600 font-medium truncate">Rate</p>
+                      <p className="font-bold text-gray-900 text-sm truncate">₹{selectedArchitect.rate}/sq.ft</p>
                     </div>
                   </div>
                 )}
-                {selectedContractor.rate && (
+                {selectedArchitect.category && (
                   <div className="flex items-center gap-2 sm:gap-3 bg-orange-50 border border-orange-200 rounded-lg p-2 sm:p-3">
                     <Clock className="w-4 h-4 sm:w-6 sm:h-6 text-orange-600 flex-shrink-0" />
                     <div className="min-w-0">
-                      <p className="text-xs text-orange-600 font-medium truncate">Rate</p>
-                      <p className="font-bold text-green-600 text-sm truncate">₹{selectedContractor.rate}/hr</p>
+                      <p className="text-xs text-orange-600 font-medium truncate">Category</p>
+                      <p className="font-bold text-green-600 text-sm truncate capitalize">{selectedArchitect.category}</p>
                     </div>
                   </div>
                 )}
@@ -366,15 +369,27 @@ export default function ContractorsPage() {
                   <Star className="w-4 h-4 sm:w-6 sm:h-6 text-purple-600 flex-shrink-0" />
                   <div className="min-w-0">
                     <p className="text-xs text-purple-600 font-medium truncate">Rating</p>
-                    <p className="font-bold text-gray-900 text-sm truncate">{selectedContractor.rating || 'New'}</p>
+                    <p className="font-bold text-gray-900 text-sm truncate">{selectedArchitect.rating || 'New'}</p>
                   </div>
                 </div>
               </div>
 
+              {/* Specialization Section */}
+              {selectedArchitect.specialization && (
+                <div className="mb-6 sm:mb-8">
+                  <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-3">Specialization</h3>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-sm">
+                      {selectedArchitect.specialization}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {/* Work Images Section - Mobile Responsive */}
               {loadingWorkImages ? (
-                <div className="mb-4 sm:mb-6">
-                  <div className="flex items-center gap-2 mb-2 sm:mb-3">
+                <div className="mb-6 sm:mb-8">
+                  <div className="flex items-center gap-2 mb-3 sm:mb-4">
                     <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
                     <h3 className="font-semibold text-gray-900 text-sm sm:text-base">Loading Work Photos...</h3>
                   </div>
@@ -384,16 +399,16 @@ export default function ContractorsPage() {
                     ))}
                   </div>
                 </div>
-              ) : contractorWorkImages.length > 0 ? (
-                <div className="mb-4 sm:mb-6">
-                  <div className="flex items-center gap-2 mb-2 sm:mb-3">
+              ) : architectWorkImages.length > 0 ? (
+                <div className="mb-6 sm:mb-8">
+                  <div className="flex items-center gap-2 mb-3 sm:mb-4">
                     <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
                     <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
-                      Previous Work Photos ({contractorWorkImages.length})
+                      Previous Work Photos ({architectWorkImages.length})
                     </h3>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
-                    {contractorWorkImages.map((imageUrl, index) => (
+                    {architectWorkImages.map((imageUrl, index) => (
                       <div 
                         key={index} 
                         className="relative cursor-pointer group"
@@ -419,34 +434,34 @@ export default function ContractorsPage() {
                   </div>
                 </div>
               ) : (
-                <div className="mb-4 sm:mb-6 text-center py-4 text-gray-500 text-sm sm:text-base">
+                <div className="mb-6 sm:mb-8 text-center py-6 text-gray-500 text-sm sm:text-base">
                   No work photos available
                 </div>
               )}
 
               {/* About Section - Mobile Responsive */}
-              {selectedContractor.about && (
-                <div className="mb-4 sm:mb-6">
-                  <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-2">About</h3>
-                  <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">{selectedContractor.about}</p>
+              {selectedArchitect.about && (
+                <div className="mb-6 sm:mb-8">
+                  <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-3">About</h3>
+                  <p className="text-gray-600 text-sm sm:text-base leading-relaxed">{selectedArchitect.about}</p>
                 </div>
               )}
 
-              {/* Action Buttons - Now inside scrollable area with bottom spacing */}
-              <div className="mt-6 mb-10"> {/* Added margin top and bottom for spacing */}
-                <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
+              {/* Action Buttons - Inside Scrollable Area */}
+              <div className="mt-8 mb-6">
+                <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
                   <button
-                    onClick={() => handleWhatsAppBooking(selectedContractor)}
-                    className="bg-green-500 text-white py-3 px-4 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-green-600 transition-colors text-sm sm:text-base"
+                    onClick={() => handleWhatsAppBooking(selectedArchitect)}
+                    className="bg-green-500 text-white py-4 px-6 rounded-xl font-semibold flex items-center justify-center gap-3 hover:bg-green-600 transition-colors text-base shadow-lg"
                   >
-                    <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <MessageCircle className="w-5 h-5" />
                     <span>WhatsApp</span>
                   </button>
                   <button
-                    onClick={() => window.location.href = `tel:${selectedContractor.phone || mediatorNumber}`}
-                    className="bg-blue-500 text-white py-3 px-4 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-blue-600 transition-colors text-sm sm:text-base"
+                    onClick={() => window.location.href = `tel:${selectedArchitect.Phone || mediatorNumber}`}
+                    className="bg-blue-500 text-white py-4 px-6 rounded-xl font-semibold flex items-center justify-center gap-3 hover:bg-blue-600 transition-colors text-base shadow-lg"
                   >
-                    <Phone className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <Phone className="w-5 h-5" />
                     <span>Call</span>
                   </button>
                 </div>
@@ -468,7 +483,7 @@ export default function ContractorsPage() {
           </button>
 
           {/* Navigation Buttons */}
-          {contractorWorkImages.length > 1 && (
+          {architectWorkImages.length > 1 && (
             <>
               <button
                 onClick={goToPrevImage}
@@ -487,13 +502,13 @@ export default function ContractorsPage() {
 
           {/* Image Counter */}
           <div className="absolute top-4 left-4 z-10 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
-            {selectedImageIndex + 1} / {contractorWorkImages.length}
+            {selectedImageIndex + 1} / {architectWorkImages.length}
           </div>
 
           {/* Main Image */}
           <div className="relative w-full h-full flex items-center justify-center p-4">
             <img
-              src={contractorWorkImages[selectedImageIndex]}
+              src={architectWorkImages[selectedImageIndex]}
               alt={`Work ${selectedImageIndex + 1}`}
               className="max-w-full max-h-full object-contain rounded-lg"
               onClick={closeImageGallery}
@@ -501,9 +516,9 @@ export default function ContractorsPage() {
           </div>
 
           {/* Thumbnail Strip (Desktop) */}
-          {contractorWorkImages.length > 1 && (
+          {architectWorkImages.length > 1 && (
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 hidden md:flex gap-2 max-w-full overflow-x-auto px-4">
-              {contractorWorkImages.map((image, index) => (
+              {architectWorkImages.map((image, index) => (
                 <button
                   key={index}
                   onClick={() => setSelectedImageIndex(index)}

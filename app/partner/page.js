@@ -68,119 +68,119 @@ export default function RoleLogin() {
   ];
 
   // Role configurations with icons and colors - Updated based on actual table schemas
-  const rolesConfig = {
-    Contractor: {
-      table: "Contractor",
-      icon: <Building2 className="w-6 h-6" />,
-      color: "from-blue-600 to-blue-800",
-      bgColor: "from-blue-50 to-blue-100",
-      fieldMapping: { 
-        phone: "phone", 
-        password: "password", 
-        name: "name", 
-        location: "location", 
-        experience: "experience", 
-        about: "about", 
-        image: "image_url", 
-        email: "email", 
-        rating: "rating", 
-        projects: "site_completed",
-        expertise: "expertise",
-        team_size: "team_size",
-        works: "works"
-      }
-    },
-    Engineer: {
-      table: "Engineer", 
-      icon: <HardHat className="w-6 h-6" />,
-      color: "from-green-600 to-green-800",
-      bgColor: "from-green-50 to-green-100",
-      fieldMapping: { 
-        phone: "Phone", 
-        password: "Password", 
-        name: "Name", 
-        location: "Location", 
-        experience: "Experience", 
-        about: "Specialization", 
-        image: "image", 
-        email: "Email", 
-        rating: "Rating", 
-        projects: "Site_completed",
-        qualification: "Qualification",
-        age: "Age",
-        works: "works"
-      }
-    },
-    Architecture: {
-      table: "architecture",
-      icon: <DraftingCompass className="w-6 h-6" />,
-      color: "from-purple-600 to-purple-800", 
-      bgColor: "from-purple-50 to-purple-100",
-      fieldMapping: { 
-        phone: "username", 
-        password: "password", 
-        name: "name", 
-        location: "location", 
-        experience: "category", 
-        about: "style_description", 
-        image: "image_url", 
-        email: null, 
-        rating: "rating", 
-        projects: null,
-        category: "category",
-        architect_name: "architect_name",
-        project_cost: "project_cost",
-        year_built: "year_built",
-        works: "works"
-      }
-    },
-    Labours: {
-      table: "labours",
-      icon: <User className="w-6 h-6" />,
-      color: "from-orange-600 to-orange-800",
-      bgColor: "from-orange-50 to-orange-100",
-      fieldMapping: { 
-        phone: "phone", 
-        password: "password", 
-        name: "name", 
-        location: "location", 
-        experience: "experience", 
-        about: "about", 
-        image: "image_url", 
-        email: "email", 
-        rating: "rating", 
-        projects: "site_completed",
-        expertise: "expertise",
-        rate: "rate",
-        team_size: "team_size",
-        stream: "stream",
-        works: "works"
-      }
-    },
-    Builder: {
-      table: "Builder",
-      icon: <Hammer className="w-6 h-6" />,
-      color: "from-red-600 to-red-800",
-      bgColor: "from-red-50 to-red-100",
-      fieldMapping: { 
-        phone: "Phone", 
-        password: "password", 
-        name: "Name", 
-        location: "Location", 
-        experience: "Experience", 
-        about: "About", 
-        image: "Image", 
-        email: "Email", 
-        rating: "Rating", 
-        projects: "Projects_completed",
-        license: "License",
-        specialties: "Specialties",
-        reviews: "Reviews",
-        verified: "Verified",
-        works: "works"
-      }
+ // Role configurations with icons and colors - Updated based on actual table schemas
+const rolesConfig = {
+  Contractor: {
+    table: "Contractor",
+    icon: <Building2 className="w-6 h-6" />,
+    color: "from-blue-600 to-blue-800",
+    bgColor: "from-blue-50 to-blue-100",
+    fieldMapping: { 
+      phone: "phone", 
+      password: "password", 
+      name: "name", 
+      location: "location", 
+      experience: "experience", 
+      about: "about", 
+      image: "image_url", 
+      email: "email", 
+      rating: "rating", 
+      projects: "site_completed",
+      expertise: "expertise",
+      team_size: "team_size",
+      works: "works"
     }
-  };
+  },
+  Engineer: {
+    table: "Engineer", 
+    icon: <HardHat className="w-6 h-6" />,
+    color: "from-green-600 to-green-800",
+    bgColor: "from-green-50 to-green-100",
+    fieldMapping: { 
+      phone: "Phone", 
+      password: "Password", 
+      name: "Name", 
+      location: "Location", 
+      experience: "Experience", 
+      about: "Specialization", 
+      image: "image", 
+      email: "Email", 
+      rating: "Rating", 
+      projects: "Site_completed",
+      qualification: "Qualification",
+      age: "Age",
+      works: "works"
+    }
+  },
+  Architecture: {
+    table: "architecture",
+    icon: <DraftingCompass className="w-6 h-6" />,
+    color: "from-purple-600 to-purple-800", 
+    bgColor: "from-purple-50 to-purple-100",
+    fieldMapping: { 
+      phone: "Phone", 
+      password: "Password", 
+      name: "name", 
+      location: "location", 
+      experience: "experience", 
+      about: "about", 
+      image: "image_url", 
+      email: null, 
+      rating: "rating", 
+      projects: null,
+      category: "category",
+      specialization: "specialization",
+      rate: "rate",
+      works: "works"
+    }
+  },
+  Labours: {
+    table: "labours",
+    icon: <User className="w-6 h-6" />,
+    color: "from-orange-600 to-orange-800",
+    bgColor: "from-orange-50 to-orange-100",
+    fieldMapping: { 
+      phone: "phone", 
+      password: "password", 
+      name: "name", 
+      location: "location", 
+      experience: "experience", 
+      about: "about", 
+      image: "image_url", 
+      email: "email", 
+      rating: "rating", 
+      projects: "site_completed",
+      expertise: "expertise",
+      rate: "rate",
+      team_size: "team_size",
+      stream: "stream",
+      works: "works"
+    }
+  },
+  Builder: {
+    table: "Builder",
+    icon: <Hammer className="w-6 h-6" />,
+    color: "from-red-600 to-red-800",
+    bgColor: "from-red-50 to-red-100",
+    fieldMapping: { 
+      phone: "Phone", 
+      password: "password", 
+      name: "Name", 
+      location: "Location", 
+      experience: "Experience", 
+      about: "About", 
+      image: "Image", 
+      email: "Email", 
+      rating: "Rating", 
+      projects: "Projects_completed",
+      license: "License",
+      specialties: "Specialties",
+      reviews: "Reviews",
+      verified: "Verified",
+      works: "works"
+    }
+  }
+};
 
   // Show success animation
   const showSuccessAnimation = (message) => {
@@ -665,10 +665,14 @@ export default function RoleLogin() {
           Qualification: "Professional",
           Specialization: registerData.expertise || "General Engineering"
         }),
-        ...(role === "Architecture" && { 
-          category: registerData.expertise || "Residential",
-          style_description: registerData.about || "Modern architectural designs"
-        }),
+     // In the handleRegister function, update the Architecture registration data:
+...(role === "Architecture" && { 
+  category: registerData.expertise || "Exterior",
+  specialization: registerData.about || "Modern architectural designs",
+  experience: registerData.experience || "General Architecture",
+  rate: 0,
+  rating: 0
+}),
         ...(role === "Labours" && { 
           expertise: registerData.expertise || "General Labor",
           site_completed: 0,

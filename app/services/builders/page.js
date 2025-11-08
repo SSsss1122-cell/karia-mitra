@@ -397,7 +397,8 @@ export default function BuildersPage() {
             </div>
 
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-20 sm:pb-8">
+           <div className="flex-1 overflow-y-auto pt-6 pb-28 sm:pt-8 sm:pb-12 px-4 sm:px-6">
+
               {/* Stats Grid - Mobile Responsive */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6">
                 {selectedBuilder.Experience && (
