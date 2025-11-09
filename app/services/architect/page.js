@@ -250,7 +250,7 @@ export default function ArchitecturePage() {
   return (
     <div className="min-h-screen bg-gray-50 pb-20"> {/* Added pb-20 for bottom spacing */}
       {/* Header */}
-      <div className="bg-white p-4 border-b sticky top-0 z-10">
+      <div className="bg-white p-4 border-b sticky top-0 z-10 pt-15">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center gap-3">
             <button

@@ -272,8 +272,8 @@ Please confirm the order and provide delivery details.`;
       )}
 
       {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto p-4">
+      <div className="bg-white border-b sticky top-0 z-40 pt-14">
+        <div className="max-w-6xl mx-auto p-4 pt-14">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 sm:gap-3">
               {selectedShop ? (

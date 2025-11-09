@@ -56,60 +56,14 @@ export default function EngineersPage() {
 
         if (error) throw error;
         
-        // If table is empty, use dummy data
-        if (!data || data.length === 0) {
-          const dummyEngineers = [
-            {
-              id: 1,
-              Name: 'Rajesh Kumar',
-              Experience: '8 years',
-              Location: 'Bengaluru, Karnataka',
-              Site_completed: 35,
-              Rating: 4.8,
-              Qualification: 'B.Tech Civil Engineering',
-              Specialization: 'Structural Engineer',
-              About: 'Expert in structural design and analysis with 8+ years of experience in residential and commercial projects.',
-              Phone: '9876543210',
-              Email: 'rajesh@engineer.com',
-              image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face'
-            },
-            {
-              id: 2,
-              Name: 'Priya Sharma',
-              Experience: '6 years',
-              Location: 'Hyderabad, Telangana',
-              Site_completed: 28,
-              Rating: 4.7,
-              Qualification: 'M.Tech Structural Engineering',
-              Specialization: 'Site Engineer',
-              About: 'Dedicated site engineer with expertise in project management and quality control for construction projects.',
-              Phone: '9988776655',
-              Email: 'priya@engineer.com',
-              image: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=400&fit=crop&crop=face'
-            },
-            {
-              id: 3,
-              Name: 'Amit Patel',
-              Experience: '12 years',
-              Location: 'Mumbai, Maharashtra',
-              Site_completed: 62,
-              Rating: 4.9,
-              Qualification: 'B.Tech Civil Engineering',
-              Specialization: 'Project Engineer',
-              About: 'Senior project engineer with extensive experience in managing large-scale infrastructure projects.',
-              Phone: '9123456780',
-              Email: 'amit@engineer.com',
-              image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop&crop=face'
-            }
-          ];
-          setEngineers(dummyEngineers);
-          setFilteredEngineers(dummyEngineers);
-        } else {
-          setEngineers(data);
-          setFilteredEngineers(data);
-        }
+        // Only set data from Supabase, no dummy data
+        console.log('Fetched engineers from database:', data);
+        setEngineers(data || []);
+        setFilteredEngineers(data || []);
       } catch (err) {
         console.error('Error fetching engineers:', err);
+        setEngineers([]);
+        setFilteredEngineers([]);
       } finally {
         setLoading(false);
       }
@@ -280,10 +234,11 @@ export default function EngineersPage() {
   };
 
   const goToPrevImage = () => {
-    setSelectedImageIndex((prev) => 
-      prev === 0 ? engineerWorkImages.length - 1 : prev - 1
-    );
-  };
+  setSelectedImageIndex((prev) =>
+    prev === 0 ? engineerWorkImages.length - 1 : prev - 1
+  );
+};
+
 
   // Handle keyboard navigation
   useEffect(() => {
@@ -305,8 +260,8 @@ export default function EngineersPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="bg-white p-4 border-b sticky top-0 z-10">
+      <div className="min-h-screen bg-gray-50 pb-20">
+        <div className="bg-white p-4 border-b sticky top-0 z-10 safe-top">
           <div className="max-w-6xl mx-auto">
             <div className="flex items-center gap-3">
               <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
@@ -316,7 +271,7 @@ export default function EngineersPage() {
             </div>
           </div>
         </div>
-        <div className="max-w-6xl mx-auto p-4 pt-6"> {/* Added pt-6 for top spacing */}
+        <div className="max-w-6xl mx-auto p-4 pt-6 pb-8">
           <div className="space-y-4">
             {[1, 2, 3].map((item) => (
               <div key={item} className="bg-white rounded-xl shadow-sm border p-4 animate-pulse">
@@ -337,9 +292,9 @@ export default function EngineersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header - Fixed with proper z-index */}
-      <div className="bg-white p-4 border-b sticky top-0 z-10">
+    <div className="min-h-screen bg-gray-50 pb-20">
+      {/* Header - Fixed with proper z-index and safe area */}
+      <div className="bg-white p-4 border-b sticky top-0 z-10 pt-17">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center gap-3">
             <button
@@ -353,8 +308,8 @@ export default function EngineersPage() {
         </div>
       </div>
 
-      {/* Content with top spacing */}
-      <div className="max-w-6xl mx-auto p-4 pt-6"> {/* Added pt-6 for top spacing */}
+      {/* Content with proper top and bottom spacing */}
+      <div className="max-w-6xl mx-auto p-4 pt-6 pb-8 safe-area-top">
         
         {/* Filter Section */}
         <div className="mb-6">
@@ -398,8 +353,10 @@ export default function EngineersPage() {
           {filteredEngineers.length === 0 ? (
             <div className="text-center py-8 md:py-12">
               <Briefcase className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500 text-lg">No engineers found</p>
-              {activeFilter !== 'all' && (
+              <p className="text-gray-500 text-lg">
+                {engineers.length === 0 ? 'No engineers available' : 'No engineers found for this filter'}
+              </p>
+              {activeFilter !== 'all' && engineers.length > 0 && (
                 <button
                   onClick={() => setActiveFilter('all')}
                   className="mt-3 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm"
@@ -689,6 +646,16 @@ export default function EngineersPage() {
           )}
         </div>
       )}
+
+      {/* Add CSS for safe areas */}
+      <style jsx>{`
+        .safe-top {
+          padding-top: env(safe-area-inset-top);
+        }
+        .safe-area-top {
+          padding-top: calc(env(safe-area-inset-top) + 1.5rem);
+        }
+      `}</style>
     </div>
   );
 }

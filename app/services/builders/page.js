@@ -40,63 +40,10 @@ export default function BuildersPage() {
 
         if (error) throw error;
 
-        if (!data || data.length === 0) {
-          const dummyBuilders = [
-            {
-              id: 1,
-              Name: 'Ravi Construction Co.',
-              Experience: '10 years',
-              Location: 'Bengaluru, Karnataka',
-              Projects_completed: 42,
-              Rating: 4.7,
-              Reviews: 85,
-              License: 'LIC-2025-09',
-              Verified: true,
-              Specialties: ['Residential', 'Commercial'],
-              Image: 'https://images.unsplash.com/photo-1581093588401-22c4f2a0229e?w=400&h=400&fit=crop&crop=face',
-              Phone: '9876543210',
-              Email: 'ravi@buildco.com',
-              About: 'We specialize in modern residential and commercial construction with 10+ years of experience. Quality and customer satisfaction are our top priorities.'
-            },
-            {
-              id: 2,
-              Name: 'Skyline Builders',
-              Experience: '8 years',
-              Location: 'Hyderabad, Telangana',
-              Projects_completed: 31,
-              Rating: 4.6,
-              Reviews: 60,
-              License: 'LIC-2023-12',
-              Verified: true,
-              Specialties: ['Apartments', 'Villas'],
-              Image: 'https://images.unsplash.com/photo-1593941707874-ef25b8b4a92d?w=400&h=400&fit=crop&crop=face',
-              Phone: '9988776655',
-              Email: 'contact@skyline.com',
-              About: 'Premium real estate developer focusing on luxury apartment projects with modern amenities and innovative designs.'
-            },
-            {
-              id: 3,
-              Name: 'GreenBuild Engineers',
-              Experience: '12 years',
-              Location: 'Pune, Maharashtra',
-              Projects_completed: 58,
-              Rating: 4.9,
-              Reviews: 102,
-              License: 'LIC-2022-07',
-              Verified: true,
-              Specialties: ['Eco-friendly homes', 'Smart buildings'],
-              Image: 'https://images.unsplash.com/photo-1529429617124-95b109e86bb8?w=400&h=400&fit=crop&crop=face',
-              Phone: '9123456780',
-              Email: 'info@greenbuild.com',
-              About: 'Leading builder in eco-friendly and sustainable construction projects. We believe in building a better future through green construction practices.'
-            }
-          ];
-          setBuilders(dummyBuilders);
-        } else {
-          setBuilders(data);
-        }
+        setBuilders(data || []);
       } catch (err) {
         console.error('Error fetching builders:', err);
+        setBuilders([]);
       } finally {
         setLoading(false);
       }
@@ -256,12 +203,20 @@ export default function BuildersPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="bg-white p-4 border-b">
+        <div className="bg-white p-4 border-b sticky top-0 z-10">
           <div className="max-w-6xl mx-auto">
-            <h1 className="text-lg md:text-xl font-bold text-gray-900 text-center">Professional Builders</h1>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => window.history.back()}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <h1 className="text-lg md:text-xl font-bold text-gray-900">Professional Builders</h1>
+            </div>
           </div>
         </div>
-        <div className="max-w-6xl mx-auto p-4">
+        <div className="max-w-6xl mx-auto p-4 pb-20">
           <div className="space-y-4">
             {[1, 2, 3].map((item) => (
               <div key={item} className="bg-white rounded-xl shadow-sm border p-4 animate-pulse">
@@ -284,7 +239,7 @@ export default function BuildersPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white p-4 border-b sticky top-0 z-10">
+      <div className="bg-white p-4 border-b sticky top-0 z-10 pt-14">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center gap-3">
             <button
@@ -298,14 +253,15 @@ export default function BuildersPage() {
         </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-6xl mx-auto p-4">
+      {/* Content - FIXED: Added pb-20 for bottom padding */}
+      <div className="max-w-6xl mx-auto p-4 pb-20">
         {/* Builders List - Mobile Responsive */}
         <div className="space-y-3 md:space-y-4">
           {builders.length === 0 ? (
             <div className="text-center py-8 md:py-12">
               <Building className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-500 text-lg">No builders found</p>
+              <p className="text-gray-400 text-sm mt-2">Check back later for available builders</p>
             </div>
           ) : (
             builders.map((builder) => (
@@ -397,8 +353,7 @@ export default function BuildersPage() {
             </div>
 
             {/* Scrollable Content */}
-           <div className="flex-1 overflow-y-auto pt-6 pb-28 sm:pt-8 sm:pb-12 px-4 sm:px-6">
-
+            <div className="flex-1 overflow-y-auto pt-6 pb-28 sm:pt-8 sm:pb-12 px-4 sm:px-6">
               {/* Stats Grid - Mobile Responsive */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6">
                 {selectedBuilder.Experience && (

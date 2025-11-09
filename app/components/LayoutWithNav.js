@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Search, Home, User, Handshake } from 'lucide-react';
+import { Search, Home, User, Flame } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 export default function LayoutWithNav({ children }) {
@@ -64,7 +64,51 @@ export default function LayoutWithNav({ children }) {
                   if (sessionData.session) {
                     console.log('Session set successfully:', sessionData.session.user.email);
                     setUser(sessionData.session.user);
-                    alert('Login successful! 🎉');
+                  const handleLogin = async (e) => {
+  e.preventDefault();
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
+    console.error("Login error:", error.message);
+  } else {
+    // ✅ Stylish toast instead of boring alert
+    if (typeof window !== "undefined") {
+      const toast = document.createElement("div");
+      toast.innerHTML = `
+        <div style="
+          position: fixed;
+          bottom: 90px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: linear-gradient(135deg, #0e1e55, #1e3a8a);
+          color: #fff;
+          padding: 14px 22px;
+          border-radius: 12px;
+          font-size: 15px;
+          font-weight: 600;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+          z-index: 9999;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        ">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#fff" viewBox="0 0 24 24">
+            <path d="M9 16.17 4.83 12l-1.42 1.41L9 19l12-12-1.41-1.41z"/>
+          </svg>
+          Login successful!
+        </div>`;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 2500);
+    }
+
+    // ✅ Optional redirect or next action
+    router.push("/dashboard");
+  }
+};
+
                     
                     // Close browser
                     try {
@@ -224,16 +268,37 @@ export default function LayoutWithNav({ children }) {
   };
 
   // ✅ FIX: Get user avatar with proper fallback for mobile
+   // ✅ FIXED: Works for Google accounts on both mobile & web
   const getUserAvatar = () => {
     if (user?.user_metadata?.avatar_url) {
       return user.user_metadata.avatar_url;
     }
-    if (user?.email) {
-      // Generate a colorful placeholder based on email
-      const name = user.user_metadata?.name || user.email.split('@')[0];
-      return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0e1e55&color=fff&size=128`;
+    if (user?.identities?.length > 0) {
+      // For Google sign-in on mobile (Capacitor)
+      const googleIdentity = user.identities.find(
+        (id) => id.provider === "google" && id.identity_data?.avatar_url
+      );
+      if (googleIdentity?.identity_data?.avatar_url) {
+        return googleIdentity.identity_data.avatar_url;
+      }
     }
-    return null;
+    if (user?.email) {
+      const name = user.user_metadata?.name || user.email.split("@")[0];
+      return `https://ui-avatars.com/api/?name=${encodeURIComponent(
+        name
+      )}&background=0e1e55&color=fff&size=128`;
+    }
+    return "/images/default-avatar.png";
+  };
+
+  // Navigate to About page
+  const handleAboutClick = () => {
+    router.push('/about');
+  };
+
+  // Navigate to Hot Deals page
+  const handleHotDealsClick = () => {
+    router.push('/hot-deals');
   };
 
   return (
@@ -267,7 +332,6 @@ export default function LayoutWithNav({ children }) {
                 />
                 <div className="flex flex-col">
                   <span className="text-xl font-bold text-gray-900 leading-tight">Karia Mitra</span>
-            
                 </div>
               </div>
 
@@ -433,17 +497,17 @@ export default function LayoutWithNav({ children }) {
           </div>
         </main>
 
-        {/* Bottom Navigation - Enhanced with safe area support (Settings removed) */}
+        {/* Bottom Navigation - Updated with Hot Deals instead of Partner */}
         <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 z-50 pb-safe">
           <div className="flex items-center justify-around p-2">
             {[
-              { icon: <Home size={20} />, name: 'Home', path: '/' },
-              { icon: <Handshake size={20} />, name: 'Partner', path: '/partner' },
-              { icon: <User size={20} />, name: 'Profile', path: '/profile' },
+              { icon: <Home size={20} />, name: 'Home', path: '/', onClick: () => router.push('/') },
+              { icon: <Flame size={20} />, name: 'Hot Deals', path: '/hot-deals', onClick: () => router.push('/hot-deals') },
+              { icon: <User size={20} />, name: 'About', path: '/about', onClick: () => router.push('/about') },
             ].map((item, index) => (
               <button
                 key={index}
-                onClick={() => router.push(item.path)}
+                onClick={item.onClick}
                 className={`flex flex-col items-center p-1 flex-1 transition-all duration-300 min-w-0 ${
                   pathname === item.path 
                     ? 'text-[#0e1e55] transform scale-105' 

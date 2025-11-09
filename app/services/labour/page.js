@@ -36,7 +36,6 @@ export default function LabourPage() {
   const filterTypes = [
     { key: 'all', label: 'All Workers' },
     { key: 'masonry', label: 'Masonry' },
-  
     { key: 'plumbing', label: 'Plumbing' },
     { key: 'electrical', label: 'Electrical' },
     { key: 'painting', label: 'Painting' },
@@ -86,7 +85,6 @@ export default function LabourPage() {
           switch (activeFilter) {
             case 'masonry':
               return expertise.includes('masonry') || expertise.includes('mason');
-        
             case 'plumbing':
               return expertise.includes('plumbing') || expertise.includes('plumber');
             case 'electrical':
@@ -291,8 +289,8 @@ export default function LabourPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Header - Fixed with proper z-index */}
-      <div className="bg-white p-4 border-b sticky top-0 z-10">
+      {/* Header - Fixed with proper z-index and safe area for mobile */}
+      <div className="bg-white p-4 border-b sticky top-0 z-10 pt-15">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center gap-3">
             <button
@@ -306,8 +304,8 @@ export default function LabourPage() {
         </div>
       </div>
 
-      {/* Content with top and bottom spacing */}
-      <div className="max-w-6xl mx-auto p-4 pt-6 pb-8">
+      {/* Content with proper top spacing for mobile */}
+      <div className="max-w-6xl mx-auto p-4 pt-6 pb-8 safe-area-top">
         
         {/* Filter Section */}
         <div className="mb-6">
@@ -633,6 +631,16 @@ export default function LabourPage() {
           )}
         </div>
       )}
+
+      {/* Add CSS for safe areas */}
+      <style jsx>{`
+        .safe-top {
+          padding-top: env(safe-area-inset-top);
+        }
+        .safe-area-top {
+          padding-top: calc(env(safe-area-inset-top) + 1.5rem);
+        }
+      `}</style>
     </div>
   );
 }

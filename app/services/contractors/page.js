@@ -25,6 +25,34 @@ export default function ContractorsPage() {
     { 
       name: "Painter", 
       image: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=300&h=200&fit=crop" 
+    },
+    { 
+      name: "Carpenter", 
+      image: "https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=300&h=200&fit=crop" 
+    },
+    { 
+      name: "Flooring", 
+      image: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=300&h=200&fit=crop" 
+    },
+    { 
+      name: "Masonry", 
+      image: "https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=300&h=200&fit=crop" 
+    },
+    { 
+      name: "False Ceiling", 
+      image: "https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=300&h=200&fit=crop" 
+    },
+    { 
+      name: "Cladding", 
+      image: "https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=300&h=200&fit=crop" 
+    },
+    { 
+      name: "EPC", 
+      image: "https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=300&h=200&fit=crop" 
+    },
+    { 
+      name: "Centring", 
+      image: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=300&h=200&fit=crop" 
     }
   ];
   
@@ -182,10 +210,10 @@ export default function ContractorsPage() {
   };
 
   const goToPrevImage = () => {
-    setSelectedImageIndex((prev) => 
-      prev === 0 ? contractorWorkImages.length - 1 : prev - 1
-    );
-  };
+  setSelectedImageIndex((prev) =>
+    prev === 0 ? engineerWorkImages.length - 1 : prev - 1
+  );
+};
 
   // Handle keyboard navigation
   useEffect(() => {
@@ -208,7 +236,7 @@ export default function ContractorsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white p-4 border-b sticky top-0 z-10">
+      <div className="bg-white p-4 border-b sticky top-0 z-10 pt-14">
         <div className="max-w-6xl mx-auto">
           {selectedType ? (
             <div className="flex items-center gap-3">
@@ -229,11 +257,11 @@ export default function ContractorsPage() {
         </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-6xl mx-auto p-4">
+      {/* Content - FIXED: Added pt-20 to prevent content hiding behind header */}
+      <div className="max-w-6xl mx-auto p-4 pt-20 pb-20">
         {!selectedType ? (
           // Service Selection Grid - Mobile Responsive
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 md:gap-4">
             {contractorTypes.map((type) => (
               <button
                 key={type.name}
@@ -246,7 +274,7 @@ export default function ContractorsPage() {
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                 />
                 <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 flex items-center justify-center transition-colors">
-                  <h3 className="text-white font-bold text-sm md:text-lg">{type.name}</h3>
+                  <h3 className="text-white font-bold text-sm md:text-lg text-center px-1">{type.name}</h3>
                 </div>
               </button>
             ))}
@@ -332,7 +360,7 @@ export default function ContractorsPage() {
             </div>
 
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-20 sm:pb-8"> {/* Increased bottom padding to 20 (80px) */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 pb-20 sm:pb-8">
               {/* Stats Grid - Mobile Responsive */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4 mb-4 sm:mb-6">
                 {selectedContractor.experience && (
@@ -433,7 +461,7 @@ export default function ContractorsPage() {
               )}
 
               {/* Action Buttons - Now inside scrollable area with bottom spacing */}
-              <div className="mt-6 mb-10"> {/* Added margin top and bottom for spacing */}
+              <div className="mt-6 mb-10">
                 <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
                   <button
                     onClick={() => handleWhatsAppBooking(selectedContractor)}
