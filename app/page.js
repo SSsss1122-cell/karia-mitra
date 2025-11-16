@@ -2,7 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+<<<<<<< HEAD
 import { ChevronLeft, ChevronRight, Star, User, Wrench, Building, HardHat, Users, Zap, Shield, Bell, Download, X, Instagram, Youtube, Eye, Camera, MapPin, TrendingUp, Play } from 'lucide-react';
+=======
+import { ChevronLeft, ChevronRight, Star, User, Wrench, Building, HardHat, Users, Zap, Shield, Bell, Download, X, Gift, Share2, Rocket, Hammer, Home, TrendingUp, Award } from 'lucide-react';
+>>>>>>> e54049035427698a8cf69f4233a97189465f7d88
 import { supabase } from './lib/supabase';
 import { Cable } from "lucide-react";
 
@@ -12,6 +16,10 @@ export default function HomePage() {
   const [updateInfo, setUpdateInfo] = useState(null);
   const [showUpdatePrompt, setShowUpdatePrompt] = useState(false);
   const [currentAppVersion, setCurrentAppVersion] = useState('1.1.0');
+<<<<<<< HEAD
+=======
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
+>>>>>>> e54049035427698a8cf69f4233a97189465f7d88
   const router = useRouter();
 
   // Enhanced Professional Services with 3x3 grid including View All
@@ -112,6 +120,7 @@ export default function HomePage() {
     }
   ];
 
+<<<<<<< HEAD
   const leaseCategories = [
     {
       id: 1,
@@ -148,6 +157,8 @@ export default function HomePage() {
   ];
 
   // Updated slides without gradient overlay - Original colors
+=======
+>>>>>>> e54049035427698a8cf69f4233a97189465f7d88
   const slides = [
     { 
       image: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=800&h=400&fit=crop", 
@@ -166,37 +177,46 @@ export default function HomePage() {
     }
   ];
 
-  const bestDeals = [
-    { 
-      id: 1, 
-      name: "Cement", 
-      image: "/images/cement.jpg",
-      rating: 4.8,
-      badge: "HOT"
+  const buildingSteps = [
+    {
+      icon: <Home className="w-8 h-8 text-white" />,
+      title: "Plan Your Project",
+      description: "Define your construction requirements and budget",
+      gradient: "from-blue-500 to-cyan-500",
+      step: "01",
+      path: '/services/architect', // Goes to architecture page
+      buttonText: "Find Architects"
     },
-    { 
-      id: 2, 
-      name: "Paint", 
-      image: "/images/paint.jpg",
-      rating: 4.9,
-      badge: "NEW"
+    {
+      icon: <Hammer className="w-8 h-8 text-white" />,
+      title: "Find Professionals",
+      description: "Connect with verified contractors and engineers",
+      gradient: "from-purple-500 to-pink-500",
+      step: "02",
+      path: '/services/builders', // Goes to builders page
+      buttonText: "Find Builders"
     },
-    { 
-      id: 3, 
-      name: "Faviocl", 
-      image: "/images/faviocl.jpg",
-      rating: 4.7,
-      badge: "SALE"
+    {
+      icon: <TrendingUp className="w-8 h-8 text-white" />,
+      title: "Start Building",
+      description: "Begin your construction journey with experts",
+      gradient: "from-orange-500 to-red-500",
+      step: "03",
+      path: '/services/contractors', // Goes to contractors page
+      buttonText: "Find Contractors"
     },
-    { 
-      id: 4, 
-      name: "Concrete Mixer", 
-      image: "/images/concrete-mixer.jpg",
-      rating: 4.6,
-      badge: "DEAL"
+    {
+      icon: <Award className="w-8 h-8 text-white" />,
+      title: "Complete & Celebrate",
+      description: "Finish your dream project successfully",
+      gradient: "from-green-500 to-emerald-500",
+      step: "04",
+      path: '/services/labour', // Goes to labour page
+      buttonText: "Find Labor"
     }
   ];
 
+<<<<<<< HEAD
   // App update checker
   useEffect(() => {
     const checkForUpdates = async () => {
@@ -229,20 +249,104 @@ export default function HomePage() {
             setUpdateInfo(null);
             setShowUpdatePrompt(false);
           }
+=======
+  const referBenefits = [
+    {
+      icon: "💰",
+      title: "Earn ₹500",
+      description: "For every friend who signs up"
+    },
+    {
+      icon: "🎁",
+      title: "Bonus ₹1000",
+      description: "When your friend completes first project"
+    },
+    {
+      icon: "🏆",
+      title: "Exclusive Rewards",
+      description: "Special gifts for top referrers"
+    }
+  ];
+
+  // ✅ Function to get current app version from localStorage or use default
+  const getCurrentAppVersion = () => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('currentAppVersion') || '1.1.0';
+    }
+    return '1.1.0';
+  };
+
+  // ✅ Function to save current app version
+  const saveCurrentAppVersion = (version) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('currentAppVersion', version);
+      setCurrentAppVersion(version);
+    }
+  };
+
+  // ✅ Enhanced App update checker with proper version comparison
+  const checkForUpdates = async () => {
+    try {
+      setIsCheckingUpdate(true);
+      const currentVersion = getCurrentAppVersion();
+      console.log('🔍 Checking for updates... Current version:', currentVersion);
+      
+      const { data, error } = await supabase
+        .from('app_updates')
+        .select('*')
+        .eq('is_active', true)
+        .order('version_code', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Supabase error:', error);
+        return;
+      }
+
+      if (data) {
+        console.log('📱 Latest version from Supabase:', data.version_name);
+        console.log('🔄 Comparing versions:', currentVersion, 'vs', data.version_name);
+        
+        // ✅ Compare versions - show update only if different
+        if (data.version_name !== currentVersion) {
+          console.log('🚨 Update available!');
+          setUpdateInfo(data);
+          setShowUpdatePrompt(true);
+>>>>>>> e54049035427698a8cf69f4233a97189465f7d88
         } else {
-          console.log('📭 No active updates found in database');
+          console.log('✅ App is up to date');
           setUpdateInfo(null);
           setShowUpdatePrompt(false);
         }
-      } catch (err) {
-        console.error('Update check error:', err.message);
+      } else {
+        console.log('📭 No active updates found in database');
         setUpdateInfo(null);
         setShowUpdatePrompt(false);
       }
-    };
+    } catch (err) {
+      console.error('Update check error:', err.message);
+      setUpdateInfo(null);
+      setShowUpdatePrompt(false);
+    } finally {
+      setIsCheckingUpdate(false);
+    }
+  };
 
+  // Check for updates on component mount
+  useEffect(() => {
+    // Initialize current version from localStorage
+    const savedVersion = getCurrentAppVersion();
+    setCurrentAppVersion(savedVersion);
+    
+    // Check for updates
     checkForUpdates();
-  }, [currentAppVersion]);
+
+    // Set up periodic update checks (every 5 minutes)
+    const updateInterval = setInterval(checkForUpdates, 5 * 60 * 1000);
+    
+    return () => clearInterval(updateInterval);
+  }, []);
 
   // Check user session
   useEffect(() => {
@@ -277,6 +381,13 @@ export default function HomePage() {
 
   const handleUpdateClick = () => {
     if (updateInfo?.apk_url) {
+<<<<<<< HEAD
+=======
+      // ✅ Update the current version in localStorage and state
+      saveCurrentAppVersion(updateInfo.version_name);
+      
+      // ✅ Increment download count in database
+>>>>>>> e54049035427698a8cf69f4233a97189465f7d88
       const incrementDownloadCount = async () => {
         try {
           await supabase
@@ -289,7 +400,13 @@ export default function HomePage() {
       };
       
       incrementDownloadCount();
+      setShowUpdatePrompt(false);
       window.open(updateInfo.apk_url, '_blank');
+      
+      // ✅ Re-check updates after a delay to confirm version update
+      setTimeout(() => {
+        checkForUpdates();
+      }, 2000);
     }
   };
 
@@ -297,6 +414,7 @@ export default function HomePage() {
     setShowUpdatePrompt(false);
   };
 
+<<<<<<< HEAD
   return (
     <div className="pb-8">
       {/* Update Prompt */}
@@ -325,52 +443,125 @@ export default function HomePage() {
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                     New
                   </span>
+=======
+  const handleManualUpdateCheck = () => {
+    checkForUpdates();
+  };
+
+  const handleReferAndEarn = () => {
+    // Implement refer and earn logic
+    alert('Refer & Earn feature coming soon! Share with your friends and earn rewards.');
+  };
+
+  const handleStartBuilding = () => {
+    router.push('/services');
+  };
+
+  const handleBuildingStepClick = (path) => {
+    router.push(path);
+  };
+
+  return (
+    <div className="pb-8 pt-8">
+      {/* 🆕 Centered Update Prompt - Shows when versions don't match */}
+      {showUpdatePrompt && updateInfo && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+          <div className="bg-gradient-to-br from-white to-gray-50/95 backdrop-blur-lg shadow-2xl border border-gray-200/80 rounded-2xl w-full max-w-md mx-auto transform transition-all duration-500 scale-95 animate-in slide-in-from-bottom-8">
+            {/* Header */}
+            <div className="relative p-6 border-b border-gray-200/60">
+              {/* Close Button */}
+              <button
+                onClick={handleClosePrompt}
+                className="absolute top-4 right-4 p-1.5 hover:bg-gray-100 rounded-lg transition-colors duration-200 group"
+              >
+                <X className="w-4 h-4 text-gray-500 group-hover:text-gray-700" />
+              </button>
+
+              <div className="flex items-center space-x-4">
+                <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
+                  <Download className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 leading-tight">
-                  Update Available! 🚀
-                </h3>
-                <p className="text-xs text-gray-500 mt-1">
-                  Current: v{currentAppVersion} → Latest: v{updateInfo.version_name}
-                </p>
+                
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      v{updateInfo.version_name}
+                    </span>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      New Version
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900 leading-tight">
+                    Update Available! 🚀
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Current: v{currentAppVersion} → Latest: v{updateInfo.version_name}
+                  </p>
+>>>>>>> e54049035427698a8cf69f4233a97189465f7d88
+                </div>
               </div>
             </div>
 
+<<<<<<< HEAD
             <div className="mb-5 relative z-10">
+=======
+            {/* Release Notes */}
+            <div className="p-6 border-b border-gray-200/60">
+>>>>>>> e54049035427698a8cf69f4233a97189465f7d88
               <p className="text-gray-600 text-sm leading-relaxed mb-3">
                 {updateInfo.release_notes || 'Experience improved performance, new features, and bug fixes for better app experience.'}
               </p>
               
-              <div className="flex items-center space-x-2 text-xs text-gray-500">
-                <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                <span>Enhanced performance</span>
-              </div>
-              <div className="flex items-center space-x-2 text-xs text-gray-500">
-                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                <span>New features added</span>
-              </div>
-              <div className="flex items-center space-x-2 text-xs text-gray-500">
-                <div className="w-1.5 h-1.5 bg-purple-500 rounded-full"></div>
-                <span>Bug fixes & improvements</span>
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2 text-xs text-gray-500">
+                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                  <span>Enhanced performance & stability</span>
+                </div>
+                <div className="flex items-center space-x-2 text-xs text-gray-500">
+                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                  <span>New features added</span>
+                </div>
+                <div className="flex items-center space-x-2 text-xs text-gray-500">
+                  <div className="w-1.5 h-1.5 bg-purple-500 rounded-full"></div>
+                  <span>Bug fixes & improvements</span>
+                </div>
               </div>
             </div>
 
+<<<<<<< HEAD
             <div className="flex space-x-3 relative z-10">
+=======
+            {/* Action Buttons */}
+            <div className="p-6">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={handleUpdateClick}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Update Now</span>
+                </button>
+                
+                <button
+                  onClick={handleClosePrompt}
+                  className="px-4 py-3 border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium rounded-xl transition-all duration-200"
+                >
+                  Later
+                </button>
+              </div>
+
+              {/* Manual update check button */}
+>>>>>>> e54049035427698a8cf69f4233a97189465f7d88
               <button
-                onClick={handleUpdateClick}
-                className="flex-1 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
+                onClick={handleManualUpdateCheck}
+                disabled={isCheckingUpdate}
+                className="w-full mt-3 text-xs text-gray-500 hover:text-gray-700 transition-colors disabled:opacity-50"
               >
-                <Download className="w-4 h-4" />
-                <span>Update Now</span>
-              </button>
-              
-              <button
-                onClick={handleClosePrompt}
-                className="px-4 py-3 border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium rounded-xl transition-all duration-200"
-              >
-                Later
+                {isCheckingUpdate ? 'Checking for updates...' : 'Check for updates manually'}
               </button>
             </div>
 
+<<<<<<< HEAD
             <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-200">
               <div className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 animate-pulse"></div>
             </div>
@@ -386,6 +577,18 @@ export default function HomePage() {
 
       {/* Hero Slider Section - Original Colors Without Blue Gradient */}
       <section className="px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8 pt-4">
+=======
+            {/* Progress Bar Animation */}
+            <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-200 rounded-b-2xl">
+              <div className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hero Slider Section */}
+      <section className="px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8">
+>>>>>>> e54049035427698a8cf69f4233a97189465f7d88
         <div className="max-w-7xl mx-auto">
           <div className="relative h-48 sm:h-64 lg:h-80 xl:h-96 rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl sm:shadow-2xl group">
             <div 
@@ -467,6 +670,7 @@ export default function HomePage() {
         </div>
       </section>
 
+<<<<<<< HEAD
       // Popular Works Section - Only Name on Full Image Cards
 <section className="px-4 sm:px-6 lg:px-8 pb-8 sm:pb-12">
   <div className="max-w-7xl mx-auto">
@@ -511,26 +715,103 @@ export default function HomePage() {
 
 
       {/* Best Deals Section */}
+=======
+      {/* Start Building Section */}
+>>>>>>> e54049035427698a8cf69f4233a97189465f7d88
       <section className="px-4 sm:px-6 lg:px-8 pb-16">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-6 sm:mb-8 lg:mb-10">
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2 sm:mb-3">🔥 Hot Deals</h2>
-            <p className="text-gray-600 text-sm sm:text-base lg:text-lg">Premium equipment available now</p>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+              🚀 Start Building Your Dream
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-8">
+              Follow these simple steps to turn your vision into reality with expert guidance
+            </p>
           </div>
-          
-          <div className="bg-gradient-to-br from-[#0e1e55] via-[#1e3a8a] to-[#3730a3] rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-xl sm:shadow-2xl relative overflow-hidden">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            {buildingSteps.map((step, index) => (
+              <div
+                key={index}
+                className="group relative bg-white rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 border border-gray-100 overflow-hidden cursor-pointer"
+                onClick={() => handleBuildingStepClick(step.path)}
+              >
+                {/* Step Number */}
+                <div className="absolute top-4 right-4">
+                  <span className="text-4xl font-bold text-gray-100 group-hover:text-gray-200 transition-colors">
+                    {step.step}
+                  </span>
+                </div>
+
+                {/* Icon */}
+                <div className={`w-16 h-16 bg-gradient-to-br ${step.gradient} rounded-2xl flex items-center justify-center shadow-lg mb-6 group-hover:scale-110 transition-transform duration-300`}>
+                  {step.icon}
+                </div>
+
+                {/* Content */}
+                <h3 className="text-xl font-bold text-gray-900 mb-3">{step.title}</h3>
+                <p className="text-gray-600 leading-relaxed mb-4">{step.description}</p>
+
+                {/* Action Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleBuildingStepClick(step.path);
+                  }}
+                  className={`w-full bg-gradient-to-r ${step.gradient} text-white font-semibold py-3 px-4 rounded-xl hover:shadow-lg transition-all duration-300 hover:scale-105 transform text-sm`}
+                >
+                  {step.buttonText}
+                </button>
+
+                {/* Hover Effect Line */}
+                <div className={`absolute bottom-0 left-0 h-1 bg-gradient-to-r ${step.gradient} w-0 group-hover:w-full transition-all duration-500`}></div>
+              </div>
+            ))}
+          </div>
+
+          {/* CTA Button */}
+          <div className="text-center">
+            <button
+              onClick={handleStartBuilding}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold text-lg py-4 px-12 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 transform"
+            >
+              🏗️ Start Your Project Now
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Refer & Earn Section */}
+      <section className="px-4 sm:px-6 lg:px-8 pb-16">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-gradient-to-br from-purple-600 via-pink-600 to-red-600 rounded-3xl p-8 sm:p-12 text-white shadow-2xl relative overflow-hidden">
+            {/* Background Pattern */}
             <div className="absolute inset-0 opacity-10">
-              <div className="absolute -top-10 -right-10 sm:-top-20 sm:-right-20 w-20 h-20 sm:w-40 sm:h-40 bg-white rounded-full"></div>
-              <div className="absolute -bottom-10 -left-10 sm:-bottom-20 sm:-left-20 w-20 h-20 sm:w-40 sm:h-40 bg-white rounded-full"></div>
+              <div className="absolute -top-20 -right-20 w-40 h-40 bg-white rounded-full"></div>
+              <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-white rounded-full"></div>
             </div>
-            
+
             <div className="relative z-10">
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
-                {bestDeals.map((deal) => (
-                  <div 
-                    key={deal.id}
-                    className="group bg-white/95 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-5 shadow-lg hover:shadow-xl sm:hover:shadow-2xl transition-all duration-500 hover:scale-105 cursor-pointer border border-white/30"
+              <div className="text-center mb-8">
+                <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Gift className="w-10 h-10 text-white" />
+                </div>
+                <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+                  🎁 Refer & Earn
+                </h2>
+                <p className="text-xl text-purple-100 max-w-2xl mx-auto">
+                  Share BuildZone with your friends and earn amazing rewards!
+                </p>
+              </div>
+
+              {/* Benefits Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                {referBenefits.map((benefit, index) => (
+                  <div
+                    key={index}
+                    className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center border border-white/20 hover:bg-white/15 transition-all duration-300 hover:scale-105"
                   >
+<<<<<<< HEAD
                     <div className="absolute -top-2 -right-2 sm:-top-3 sm:-right-3 z-20">
                       <span className={`px-3 py-1.5 rounded-full text-xs font-bold text-white shadow-lg ${
                         deal.badge === 'HOT' ? 'bg-red-500' :
@@ -555,94 +836,66 @@ export default function HomePage() {
                       <Star size={16} className="text-yellow-400 fill-current" />
                       <span className="text-sm sm:text-base text-gray-600 font-medium">{deal.rating}</span>
                     </div>
+=======
+                    <div className="text-3xl mb-3">{benefit.icon}</div>
+                    <h3 className="text-xl font-bold mb-2">{benefit.title}</h3>
+                    <p className="text-purple-100">{benefit.description}</p>
+>>>>>>> e54049035427698a8cf69f4233a97189465f7d88
                   </div>
                 ))}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <button
+                  onClick={handleReferAndEarn}
+                  className="bg-white text-purple-600 font-bold py-4 px-8 rounded-2xl hover:scale-105 transition-all duration-300 shadow-2xl hover:shadow-3xl flex items-center space-x-3"
+                >
+                  <Share2 className="w-5 h-5" />
+                  <span>Invite Friends Now</span>
+                </button>
+                
+                <button
+                  onClick={() => router.push('/rewards')}
+                  className="border-2 border-white text-white font-bold py-4 px-8 rounded-2xl hover:bg-white hover:text-purple-600 transition-all duration-300"
+                >
+                  View Rewards
+                </button>
+              </div>
+
+              {/* Additional Info */}
+              <div className="text-center mt-6">
+                <p className="text-purple-200 text-sm">
+                  ✨ No limit on earnings • Instant payouts • Exclusive bonuses
+                </p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Equipment Categories Section */}
-      <section className="px-4 sm:px-6 lg:px-8 pb-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-8 sm:mb-10 lg:mb-12">
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2 sm:mb-3">
-              📦 Equipment Categories
-            </h2>
-            <p className="text-gray-600 text-sm sm:text-base lg:text-lg">
-              Rent or buy quality construction equipment
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
-            {leaseCategories.map((category) => {
-              let categoryId;
-              if (category.name.toLowerCase().includes("sanitation")) categoryId = 1;
-              else if (category.name.toLowerCase().includes("aggregate")) categoryId = 2;
-              else if (category.name.toLowerCase().includes("cladding")) categoryId = 3;
-              else if (category.name.toLowerCase().includes("hardware")) categoryId = 6;
-
-              return (
-                <div
-                  key={category.name}
-                  onClick={() => router.push(`/shops/${categoryId}`)}
-                  className="group relative bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-lg sm:shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 cursor-pointer border border-gray-100 overflow-hidden"
-                >
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-br ${category.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-500`}
-                  ></div>
-
-                  <div className="flex items-center space-x-4 sm:space-x-6">
-                    <div className="flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 relative">
-                      <img
-                        src={category.image}
-                        alt={category.name}
-                        className="w-full h-full object-cover rounded-xl sm:rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300"
-                        onError={(e) => handleImageError(e, category.name)}
-                      />
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1 sm:mb-2 group-hover:text-gray-800 transition-colors">
-                        {category.name}
-                      </h3>
-                      <p className="text-gray-600 text-sm sm:text-base mb-3 sm:mb-4 leading-relaxed">
-                        {category.subtitle}
-                      </p>
-                      <div className="flex">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            router.push(`/shops/${categoryId}`);
-                          }}
-                          className="px-6 py-3 bg-gradient-to-r from-[#0e1e55] to-[#1e3a8a] text-white font-semibold rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 text-sm sm:text-base w-full text-center"
-                        >
-                          Explore Shops
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
       {/* Footer showing current app version */}
       <footer className="mt-10 mb-4 text-gray-500 text-sm text-center">
-        <p>
-          App Version:&nbsp;
-          <span className="font-medium text-gray-700">
-            v{currentAppVersion}
-          </span>
-          {updateInfo && (
-            <span className="text-xs text-gray-400 ml-2">
-              (Latest: v{updateInfo.version_name})
+        <div className="flex flex-col items-center space-y-2">
+          <p>
+            App Version:&nbsp;
+            <span className="font-medium text-gray-700">
+              v{currentAppVersion}
             </span>
-          )}
-        </p>
+            {updateInfo && (
+              <span className="text-xs text-gray-400 ml-2">
+                (Latest: v{updateInfo.version_name})
+              </span>
+            )}
+          </p>
+          <button
+            onClick={handleManualUpdateCheck}
+            disabled={isCheckingUpdate}
+            className="text-xs text-blue-600 hover:text-blue-800 transition-colors disabled:opacity-50"
+          >
+            {isCheckingUpdate ? 'Checking for updates...' : 'Check for updates'}
+          </button>
+        </div>
       </footer>
     </div>
   );

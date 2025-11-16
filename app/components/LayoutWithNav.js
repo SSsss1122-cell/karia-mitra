@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Search, Building2, Home, Settings, User, Handshake } from 'lucide-react'; // ✅ added Handshake icon
+import { Search, Home, User, Flame } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 export default function LayoutWithNav({ children }) {
@@ -17,20 +17,157 @@ export default function LayoutWithNav({ children }) {
   const menuRef = useRef(null);
 
   useEffect(() => {
-    const getUser = async () => {
-      const { data } = await supabase.auth.getUser();
-      if (data?.user) setUser(data.user);
+    // ✅ Fixed Capacitor app URL listener with proper URL parsing
+    const setupAppUrlListener = async () => {
+      try {
+        if (typeof window !== 'undefined' && window.Capacitor) {
+          const { App } = await import('@capacitor/app');
+          
+          App.addListener('appUrlOpen', async (data) => {
+            console.log('App opened with URL:', data.url);
+            
+            if (data.url.includes('auth/callback')) {
+              try {
+                // Parse the URL properly - handle both # and ? parameters
+                let url = data.url;
+                
+                // Replace # with ? for proper parsing (Supabase uses hash fragments)
+                if (url.includes('#')) {
+                  url = url.replace('#', '?');
+                }
+                
+                const urlObj = new URL(url);
+                const access_token = urlObj.searchParams.get('access_token');
+                const refresh_token = urlObj.searchParams.get('refresh_token');
+                const error_description = urlObj.searchParams.get('error_description');
+                
+                console.log('Extracted tokens - access_token:', !!access_token, 'refresh_token:', !!refresh_token);
+                
+                if (error_description) {
+                  alert('Login failed: ' + decodeURIComponent(error_description));
+                  return;
+                }
+                
+                if (access_token && refresh_token) {
+                  // Set session with the tokens
+                  const { data: sessionData, error } = await supabase.auth.setSession({
+                    access_token,
+                    refresh_token
+                  });
+                  
+                  if (error) {
+                    console.error('Session set error:', error);
+                    alert('Login failed: ' + error.message);
+                    return;
+                  }
+                  
+                  if (sessionData.session) {
+                    console.log('Session set successfully:', sessionData.session.user.email);
+                    setUser(sessionData.session.user);
+                  const handleLogin = async (e) => {
+  e.preventDefault();
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
+    console.error("Login error:", error.message);
+  } else {
+    // ✅ Stylish toast instead of boring alert
+    if (typeof window !== "undefined") {
+      const toast = document.createElement("div");
+      toast.innerHTML = `
+        <div style="
+          position: fixed;
+          bottom: 90px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: linear-gradient(135deg, #0e1e55, #1e3a8a);
+          color: #fff;
+          padding: 14px 22px;
+          border-radius: 12px;
+          font-size: 15px;
+          font-weight: 600;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+          z-index: 9999;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        ">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#fff" viewBox="0 0 24 24">
+            <path d="M9 16.17 4.83 12l-1.42 1.41L9 19l12-12-1.41-1.41z"/>
+          </svg>
+          Login successful!
+        </div>`;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 2500);
+    }
+
+    // ✅ Optional redirect or next action
+    router.push("/dashboard");
+  }
+};
+
+                    
+                    // Close browser
+                    try {
+                      const { Browser } = await import('@capacitor/browser');
+                      await Browser.close();
+                    } catch (e) {
+                      console.log('Browser close failed:', e);
+                    }
+                  }
+                } else {
+                  console.log('No tokens found in URL');
+                  alert('Login failed: No authentication tokens received');
+                }
+              } catch (error) {
+                console.error('Auth callback error:', error);
+                alert('Login failed: ' + error.message);
+              }
+            }
+          });
+        }
+      } catch (error) {
+        console.log('Capacitor App not available');
+      }
     };
+
+    setupAppUrlListener();
+  }, []);
+
+  useEffect(() => {
+    const getUser = async () => {
+      try {
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error) {
+          console.error('Get user error:', error);
+          return;
+        }
+        console.log('Current user:', user?.email);
+        setUser(user);
+      } catch (error) {
+        console.error('Get user failed:', error);
+      }
+    };
+    
     getUser();
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session?.user?.email);
       setUser(session?.user || null);
+      
+      if (event === 'SIGNED_IN') {
+        console.log('User signed in:', session.user.email);
+        setShowProfileMenu(false);
+      }
     });
 
     return () => {
-      listener.subscription.unsubscribe();
+      subscription.unsubscribe();
     };
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -68,44 +205,133 @@ export default function LayoutWithNav({ children }) {
 
   const handleGoogleLogin = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' });
-      if (error) throw error;
+      console.log('Google login clicked');
+      
+      const isCapacitor = typeof window !== 'undefined' && window.Capacitor;
+      console.log('isCapacitor:', isCapacitor);
+      
+      // ✅ FIX: Use different redirect URLs for web vs mobile
+      const redirectTo = isCapacitor 
+        ? 'kariamitra://auth/callback' // Mobile app
+        : `${window.location.origin}/auth/callback`; // Web
+
+      console.log('Redirect URL:', redirectTo);
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectTo,
+          skipBrowserRedirect: isCapacitor
+        }
+      });
+      
+      if (error) {
+        console.error('Google login error:', error);
+        throw error;
+      }
+      
+      // For mobile, open the URL in browser
+      if (isCapacitor && data?.url) {
+        try {
+          const { Browser } = await import('@capacitor/browser');
+          console.log('Opening OAuth URL in browser:', data.url);
+          await Browser.open({ url: data.url });
+        } catch (browserError) {
+          console.error('Browser plugin error:', browserError);
+          // Fallback - let Supabase handle the redirect
+          const { data: fallbackData, error: fallbackError } = await supabase.auth.signInWithOAuth({
+            provider: 'google'
+          });
+          if (fallbackError) throw fallbackError;
+        }
+      }
+      
+      console.log('Google login initiated successfully');
+      setShowProfileMenu(false);
+      
     } catch (err) {
-      alert(err.message);
+      console.error('Google login failed:', err);
+      alert('Google login failed: ' + err.message);
     }
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    alert('Logged out successfully!');
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setShowProfileMenu(false);
+      alert('Logged out successfully!');
+    } catch (error) {
+      console.error('Logout error:', error);
+      alert('Logout failed: ' + error.message);
+    }
+  };
+
+  // ✅ FIX: Get user avatar with proper fallback for mobile
+   // ✅ FIXED: Works for Google accounts on both mobile & web
+  const getUserAvatar = () => {
+    if (user?.user_metadata?.avatar_url) {
+      return user.user_metadata.avatar_url;
+    }
+    if (user?.identities?.length > 0) {
+      // For Google sign-in on mobile (Capacitor)
+      const googleIdentity = user.identities.find(
+        (id) => id.provider === "google" && id.identity_data?.avatar_url
+      );
+      if (googleIdentity?.identity_data?.avatar_url) {
+        return googleIdentity.identity_data.avatar_url;
+      }
+    }
+    if (user?.email) {
+      const name = user.user_metadata?.name || user.email.split("@")[0];
+      return `https://ui-avatars.com/api/?name=${encodeURIComponent(
+        name
+      )}&background=0e1e55&color=fff&size=128`;
+    }
+    return "/images/default-avatar.png";
+  };
+
+  // Navigate to About page
+  const handleAboutClick = () => {
+    router.push('/about');
+  };
+
+  // Navigate to Hot Deals page
+  const handleHotDealsClick = () => {
+    router.push('/hot-deals');
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f8fafc] via-[#f1f5f9] to-[#e2e8f0]">
+    <div className="min-h-screen bg-white">
+      {/* Background Decorations */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-r from-[#1e3a8a] to-[#3730a3] rounded-full blur-3xl opacity-20"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-r from-[#1e40af] to-[#1d4ed8] rounded-full blur-3xl opacity-20"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-r from-[#1e3a8a] to-[#3730a3] rounded-full blur-3xl opacity-10"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-r from-[#1e40af] to-[#1d4ed8] rounded-full blur-3xl opacity-10"></div>
       </div>
 
       <div className="relative z-10">
-        {/* Header */}
-        <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg border-b border-gray-200/50">
+        {/* Header - Fixed with safe area for mobile */}
+        <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-lg border-b border-gray-200/50 pt-safe">
           <div className="px-4 sm:px-6 lg:px-8 py-3">
             <div className="max-w-7xl mx-auto flex items-center justify-between">
-              {/* Logo */}
+              {/* Logo with Karia Mitra name - Now using image from public folder */}
               <div
-                className="flex items-center space-x-3 flex-shrink-0 cursor-pointer"
+                className="flex items-center flex-shrink-0 cursor-pointer space-x-3"
                 onClick={() => router.push('/')}
               >
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-[#0e1e55] to-[#1e3a8a] rounded-lg flex items-center justify-center shadow-lg">
-                  <Building2 className="text-white" size={18} />
-                </div>
-                <div>
-                  <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-[#0e1e55] to-[#1e3a8a] bg-clip-text text-transparent">
-                    BuildMaster
-                  </h1>
-                  <p className="text-gray-500 text-xs hidden sm:block">Construction Pro</p>
+                <img 
+                  src="/images/logo.png" 
+                  alt="Karia Mitra Logo" 
+                  className="w-12 h-12 object-contain"
+                  onError={(e) => {
+                    // Fallback if logo image doesn't exist
+                    console.error('Logo image not found, using fallback');
+                    e.target.style.display = 'none';
+                    // You could add a fallback div here if needed
+                  }}
+                />
+                <div className="flex flex-col">
+                  <span className="text-xl font-bold text-gray-900 leading-tight">Karia Mitra</span>
                 </div>
               </div>
 
@@ -122,103 +348,139 @@ export default function LayoutWithNav({ children }) {
                 <div
                   className="relative"
                   ref={menuRef}
-                  onMouseEnter={() => setShowProfileMenu(true)}
-                  onMouseLeave={() => setShowProfileMenu(false)}
                 >
                   <button
                     onClick={() => setShowProfileMenu((prev) => !prev)}
                     className="flex items-center space-x-2 bg-gradient-to-r from-[#0e1e55] to-[#1e3a8a] rounded-xl px-3 py-2 shadow-lg hover:scale-105 transition-transform duration-300"
                   >
-                    {user && user.user_metadata?.avatar_url ? (
+                    {/* ✅ FIX: Avatar with proper fallback for mobile */}
+                    {user ? (
                       <img
-                        src={user.user_metadata.avatar_url}
+                        src={getUserAvatar()}
                         alt="avatar"
-                        className="w-6 h-6 rounded-full"
+                        className="w-8 h-8 rounded-full border-2 border-white"
+                        onError={(e) => {
+                          // Fallback if image fails to load (common in mobile)
+                          const name = user.user_metadata?.name || user.email?.split('@')[0] || 'U';
+                          e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0e1e55&color=fff&size=64`;
+                        }}
                       />
                     ) : (
                       <User className="text-white" size={16} />
                     )}
                     <span className="text-white font-medium text-sm hidden sm:block">
-                      {user ? user.user_metadata?.name?.split(' ')[0] || 'Account' : 'Profile'}
+                      {user ? user.user_metadata?.name?.split(' ')[0] || user.email?.split('@')[0] || 'Account' : 'Profile'}
                     </span>
                   </button>
 
                   {showProfileMenu && (
-                    <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 p-4 z-50">
+                    <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-lg border border-gray-200 p-4 z-50">
                       {user ? (
                         <div className="space-y-3 text-center">
-                          <p className="text-sm text-gray-700">
-                            Signed in as<br />
-                            <span className="font-medium text-gray-900">
-                              {user.email}
-                            </span>
-                          </p>
+                          <div className="flex items-center justify-center space-x-3">
+                            {/* ✅ FIX: Avatar in profile menu with fallback */}
+                            <img
+                              src={getUserAvatar()}
+                              alt="avatar"
+                              className="w-16 h-16 rounded-full border-2 border-[#0e1e55]"
+                              onError={(e) => {
+                                const name = user.user_metadata?.name || user.email?.split('@')[0] || 'U';
+                                e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0e1e55&color=fff&size=96`;
+                              }}
+                            />
+                            <div className="text-left">
+                              <p className="text-sm font-bold text-gray-900 truncate max-w-[120px]">
+                                {user.user_metadata?.name || 'User'}
+                              </p>
+                              <p className="text-xs text-gray-600 truncate max-w-[120px]">{user.email}</p>
+                            </div>
+                          </div>
                           <button
                             onClick={handleLogout}
-                            className="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition"
+                            className="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-2 rounded-lg transition-all duration-200 text-sm"
                           >
                             Logout
                           </button>
                         </div>
                       ) : (
-                        <form onSubmit={handleAuth} className="space-y-3">
-                          <h3 className="text-center font-semibold text-gray-800 text-sm">
-                            {authMode === 'login'
-                              ? 'Login to your account'
-                              : 'Create an account'}
+                        <div className="space-y-3">
+                          {/* ✅ FIX: Visible text with proper contrast */}
+                          <h3 className="text-center text-base font-bold text-gray-900 mb-1">
+                            {authMode === 'login' ? 'Welcome Back' : 'Join Us'}
                           </h3>
-                          <input
-                            type="email"
-                            placeholder="Email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0e1e55]"
-                            required
-                          />
-                          <input
-                            type="password"
-                            placeholder="Password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#0e1e55]"
-                            required
-                          />
+                          
+                          {/* Email Login Form */}
+                          <form onSubmit={handleAuth} className="space-y-3">
+                            <div>
+                              <input
+                                type="email"
+                                placeholder="Email address"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white placeholder-gray-500 outline-none focus:ring-2 focus:ring-[#0e1e55] focus:border-transparent"
+                                required
+                              />
+                            </div>
+                            
+                            <div>
+                              <input
+                                type="password"
+                                placeholder="Password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white placeholder-gray-500 outline-none focus:ring-2 focus:ring-[#0e1e55] focus:border-transparent"
+                                required
+                              />
+                            </div>
+                            
+                            <button
+                              type="submit"
+                              disabled={loading}
+                              className="w-full bg-gradient-to-r from-[#0e1e55] to-[#1e3a8a] text-white font-medium py-2 rounded-lg hover:opacity-90 transition disabled:opacity-50 text-sm"
+                            >
+                              {loading
+                                ? 'Please wait...'
+                                : authMode === 'login'
+                                ? 'Sign In'
+                                : 'Create Account'}
+                            </button>
+                          </form>
+
+                          {/* Divider */}
+                          <div className="flex items-center my-2">
+                            <div className="flex-1 border-t border-gray-300"></div>
+                            <span className="px-2 text-xs text-gray-500">OR</span>
+                            <div className="flex-1 border-t border-gray-300"></div>
+                          </div>
+
+                          {/* Google Login Button */}
                           <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full bg-gradient-to-r from-[#0e1e55] to-[#1e3a8a] text-white py-2 rounded-lg hover:opacity-90 transition disabled:opacity-50"
-                          >
-                            {loading
-                              ? 'Please wait...'
-                              : authMode === 'login'
-                              ? 'Login'
-                              : 'Sign Up'}
-                          </button>
-                          <button
-                            type="button"
                             onClick={handleGoogleLogin}
-                            className="w-full border border-gray-300 rounded-lg py-2 flex items-center justify-center gap-2 hover:bg-gray-50 transition"
+                            className="w-full border border-gray-300 rounded-lg py-2 flex items-center justify-center gap-2 hover:bg-gray-50 transition-all duration-200 text-sm"
                           >
                             <img
                               src="https://www.svgrepo.com/show/475656/google-color.svg"
                               alt="Google"
-                              className="w-5 h-5"
+                              className="w-4 h-4"
                             />
-                            <span className="text-sm font-medium text-gray-700">
-                              Sign in with Google
+                            <span className="font-medium text-gray-700">
+                              Continue with Google
                             </span>
                           </button>
-                          <p
-                            onClick={() =>
-                              setAuthMode(authMode === 'login' ? 'signup' : 'login')
-                            }
-                            className="text-xs text-center text-[#0e1e55] cursor-pointer hover:underline"
-                          >
-                            {authMode === 'login'
-                              ? "Don't have an account? Sign up"
-                              : 'Already have an account? Login'}
+
+                          {/* Switch between login/signup */}
+                          <p className="text-center text-xs text-gray-600 mt-2">
+                            {authMode === 'login' 
+                              ? "Don't have an account? " 
+                              : "Already have an account? "}
+                            <span
+                              onClick={() => setAuthMode(authMode === 'login' ? 'signup' : 'login')}
+                              className="text-[#0e1e55] font-semibold cursor-pointer hover:underline"
+                            >
+                              {authMode === 'login' ? 'Sign up' : 'Sign in'}
+                            </span>
                           </p>
-                        </form>
+                        </div>
                       )}
                     </div>
                   )}
@@ -228,31 +490,56 @@ export default function LayoutWithNav({ children }) {
           </div>
         </header>
 
-        <main className="pb-20">{children}</main>
+        {/* Main Content - Increased bottom padding to avoid collision with bottom nav */}
+        <main className="pt-20 pb-32 min-h-screen safe-area-padding">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {children}
+          </div>
+        </main>
 
-        {/* ✅ Bottom Navigation with Partner added */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-t border-gray-200 z-50">
+        {/* Bottom Navigation - Updated with Hot Deals instead of Partner */}
+        <nav className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-gray-200 z-50 pb-safe">
           <div className="flex items-center justify-around p-2">
             {[
-              { icon: <Home size={20} />, name: 'Home', path: '/' },
-              { icon: <Handshake size={20} />, name: 'Partner', path: '/partner' }, // ✅ new button
-              { icon: <User size={20} />, name: 'Profile', path: '/profile' },
-              { icon: <Settings size={20} />, name: 'Settings', path: '/settings' },
+              { icon: <Home size={20} />, name: 'Home', path: '/', onClick: () => router.push('/') },
+              { icon: <Flame size={20} />, name: 'Hot Deals', path: '/hot-deals', onClick: () => router.push('/hot-deals') },
+              { icon: <User size={20} />, name: 'About', path: '/about', onClick: () => router.push('/about') },
             ].map((item, index) => (
               <button
                 key={index}
-                onClick={() => router.push(item.path)}
-                className={`flex flex-col items-center p-2 flex-1 transition-all duration-300 ${
-                  pathname === item.path ? 'text-[#0e1e55]' : 'text-gray-600'
+                onClick={item.onClick}
+                className={`flex flex-col items-center p-1 flex-1 transition-all duration-300 min-w-0 ${
+                  pathname === item.path 
+                    ? 'text-[#0e1e55] transform scale-105' 
+                    : 'text-gray-600 hover:text-[#0e1e55]'
                 }`}
               >
-                {item.icon}
-                <span className="text-xs font-medium">{item.name}</span>
+                <div className={`p-2 rounded-lg transition-colors ${
+                  pathname === item.path ? 'bg-[#0e1e55]/10' : ''
+                }`}>
+                  {item.icon}
+                </div>
+                <span className="text-xs font-medium mt-0.5 truncate w-full text-center">
+                  {item.name}
+                </span>
               </button>
             ))}
           </div>
         </nav>
       </div>
+
+      {/* Add CSS for safe areas */}
+      <style jsx>{`
+        .safe-area-padding {
+          padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
+        }
+        .pb-safe {
+          padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        .pt-safe {
+          padding-top: env(safe-area-inset-top, 0px);
+        }
+      `}</style>
     </div>
   );
 }

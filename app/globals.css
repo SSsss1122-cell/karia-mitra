@@ -4,6 +4,46 @@
 @tailwind utilities;
 
 
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Header top padding (status bar / notch) */
+.header {
+  padding-top: env(safe-area-inset-top, 20px);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px; /* Adjust to your header height */
+  z-index: 50;
+  background-color: white; /* Or semi-transparent */
+}
+
+/* Footer bottom padding (home button / nav bar) */
+.footer {
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px; /* Adjust to your nav height */
+  z-index: 50;
+  background-color: white;
+}
+
+/* Main content padding to avoid overlap */
+.content {
+  padding-top: calc(60px + env(safe-area-inset-top, 20px));
+  padding-bottom: calc(60px + env(safe-area-inset-bottom, 20px));
+}
+
+
+
 
 /* Add dark mode support */
 .dark {
