@@ -2,48 +2,113 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, ChevronRight, Star, User, Wrench, Building, HardHat, Users, Zap, Shield, Bell, Download, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star, User, Wrench, Building, HardHat, Users, Zap, Shield, Bell, Download, X, Instagram, Youtube, Eye, Camera, MapPin, TrendingUp, Play } from 'lucide-react';
 import { supabase } from './lib/supabase';
+import { Cable } from "lucide-react";
 
 export default function HomePage() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [user, setUser] = useState(null);
   const [updateInfo, setUpdateInfo] = useState(null);
   const [showUpdatePrompt, setShowUpdatePrompt] = useState(false);
-  const [currentAppVersion, setCurrentAppVersion] = useState('1.1.0'); // ✅ Current app version
+  const [currentAppVersion, setCurrentAppVersion] = useState('1.1.0');
   const router = useRouter();
 
-  // Professional categories with beautiful gradient colors
+  // Enhanced Professional Services with 3x3 grid including View All
   const professionalServices = [
     { 
-      icon: <User className="text-white" size={20} />, 
+      icon: <User className="text-white" size={24} />, 
       name: 'Contractors', 
       gradient: 'from-[#0e1e55] to-[#1e3a8a]',
       path: '/services/contractors'
     },
     { 
-      icon: <Wrench className="text-white" size={20} />, 
+      icon: <Wrench className="text-white" size={24} />, 
       name: 'Engineers', 
       gradient: 'from-[#0e1e55] to-[#3730a3]',
       path: '/services/engineers'
     },
     { 
-      icon: <Building className="text-white" size={20} />, 
+      icon: <Building className="text-white" size={24} />, 
       name: 'Architects', 
       gradient: 'from-[#0e1e55] to-[#1e40af]',
       path: '/services/architect'
     },
     { 
-      icon: <HardHat className="text-white" size={20} />, 
+      icon: <HardHat className="text-white" size={24} />, 
       name: 'Builders', 
       gradient: 'from-[#0e1e55] to-[#1d4ed8]',
       path: '/services/builders'
     },
     { 
-      icon: <Users className="text-white" size={20} />, 
+      icon: <Users className="text-white" size={24} />, 
       name: 'Labor', 
       gradient: 'from-[#0e1e55] to-[#2563eb]',
       path: '/services/labour'
+    },
+    {
+      icon: <Cable className="text-white" size={24} />,
+      name: 'Technicians',
+      gradient: 'from-[#0e1e55] to-[#3b82f6]',
+      path: '/services/technicians'
+    }
+  ];
+
+  // Updated Popular Works Section - Full Image Cards with Text Overlay
+  const popularWorks = [
+    {
+      id: 1,
+      title: "Modern Villa Construction",
+      category: "Architecture",
+      image: "https://thumbs.dreamstime.com/b/building-construction-design-materials-villa-house-decoration-design-building-construction-villa-house-decoration-design-brick-306441940.jpg",
+      views: "15.2K",
+      rating: 4.8,
+      duration: "2 months"
+    },
+    {
+      id: 2,
+      title: "Commercial Complex",
+      category: "Engineering",
+      image: "https://newprojects.99acres.com/projects/samarth_group/samarth_the_capital/images/elev2.jpg",
+      views: "12.7K",
+      rating: 4.9,
+      duration: "6 months"
+    },
+    {
+      id: 3,
+      title: "Interior Design Project",
+      category: "Design",
+      image: "https://styledegree.sg/wp-content/uploads/2020/04/Install-Glass-Doors-StyleMag.jpg",
+      views: "18.9K",
+      rating: 4.7,
+      duration: "1 month"
+    },
+    {
+      id: 4,
+      title: "Bridge Construction",
+      category: "Civil Work",
+      image: "https://www.uhpcsolutions.com/hubfs/DJI_0130-1.jpg",
+      views: "25.4K",
+      rating: 4.9,
+      duration: "12 months"
+    },
+    {
+      id: 5,
+      title: "Landscape Design",
+      category: "Architecture",
+      image: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=300&fit=crop",
+      views: "9.8K",
+      rating: 4.6,
+      duration: "3 weeks"
+    },
+    {
+      id: 6,
+      title: "Smart Home Setup",
+      category: "Technology",
+      image: "https://mir-s3-cdn-cf.behance.net/project_modules/fs/0a5a37113024775.601ff297082a5.png",
+      views: "11.3K",
+      rating: 4.8,
+      duration: "1 month"
     }
   ];
 
@@ -82,24 +147,22 @@ export default function HomePage() {
     }
   ];
 
+  // Updated slides without gradient overlay - Original colors
   const slides = [
     { 
       image: "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=800&h=400&fit=crop", 
       title: "Professional Construction", 
-      description: "Quality workmanship guaranteed for all projects",
-      gradient: "from-[#0e1e55]/80 to-[#1e3a8a]/80"
+      description: "Quality workmanship guaranteed for all projects"
     },
     { 
       image: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=800&h=400&fit=crop", 
       title: "Expert Engineering", 
-      description: "Precision and innovation in every project",
-      gradient: "from-[#0e1e55]/80 to-[#3730a3]/80"
+      description: "Precision and innovation in every project"
     },
     { 
-      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSHvHTBgyYs44qkZOBestYRswZ8qf3JKT2scA&s",
+      image: "https://img.freepik.com/premium-photo/architecture-building-3d-illustration_1022901-479.jpg",
       title: "Modern Architecture", 
-      description: "Innovative design solutions for modern living",
-      gradient: "from-[#0e1e55]/80 to-[#1d4ed8]/80"
+      description: "Innovative design solutions for modern living"
     }
   ];
 
@@ -134,7 +197,7 @@ export default function HomePage() {
     }
   ];
 
-  // ✅ Enhanced App update checker with proper version comparison
+  // App update checker
   useEffect(() => {
     const checkForUpdates = async () => {
       try {
@@ -143,7 +206,7 @@ export default function HomePage() {
         const { data, error } = await supabase
           .from('app_updates')
           .select('*')
-          .eq('is_active', true) // ✅ Only check active updates
+          .eq('is_active', true)
           .order('version_code', { ascending: false })
           .limit(1)
           .maybeSingle();
@@ -157,7 +220,6 @@ export default function HomePage() {
           console.log('📱 Latest version from Supabase:', data.version_name);
           console.log('🔄 Comparing versions:', currentAppVersion, 'vs', data.version_name);
           
-          // ✅ Compare versions - show update only if different
           if (data.version_name !== currentAppVersion) {
             console.log('🚨 Update available!');
             setUpdateInfo(data);
@@ -182,7 +244,7 @@ export default function HomePage() {
     checkForUpdates();
   }, [currentAppVersion]);
 
-  // Check user session on component mount
+  // Check user session
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -191,7 +253,6 @@ export default function HomePage() {
     
     getUser();
 
-    // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setUser(session?.user ?? null);
     });
@@ -216,7 +277,6 @@ export default function HomePage() {
 
   const handleUpdateClick = () => {
     if (updateInfo?.apk_url) {
-      // ✅ Increment download count in database
       const incrementDownloadCount = async () => {
         try {
           await supabase
@@ -239,14 +299,12 @@ export default function HomePage() {
 
   return (
     <div className="pb-8">
-      {/* 🆕 Enhanced Update Prompt - Only shows when versions don't match */}
+      {/* Update Prompt */}
       {showUpdatePrompt && updateInfo && (
         <div className="fixed bottom-6 right-6 w-80 sm:w-96 z-50 animate-in slide-in-from-bottom-full duration-500">
           <div className="bg-gradient-to-br from-white to-gray-50/95 backdrop-blur-lg shadow-2xl border border-gray-200/80 rounded-2xl p-6 relative overflow-hidden">
-            {/* Background Pattern */}
             <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-blue-500/5 to-cyan-500/5 rounded-full -translate-y-8 translate-x-8"></div>
             
-            {/* Close Button */}
             <button
               onClick={handleClosePrompt}
               className="absolute top-4 right-4 p-1.5 hover:bg-gray-100 rounded-lg transition-colors duration-200 group"
@@ -254,7 +312,6 @@ export default function HomePage() {
               <X className="w-4 h-4 text-gray-500 group-hover:text-gray-700" />
             </button>
 
-            {/* Header */}
             <div className="flex items-start space-x-4 mb-4 relative z-10">
               <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg">
                 <Download className="w-6 h-6 text-white" />
@@ -278,7 +335,6 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Release Notes */}
             <div className="mb-5 relative z-10">
               <p className="text-gray-600 text-sm leading-relaxed mb-3">
                 {updateInfo.release_notes || 'Experience improved performance, new features, and bug fixes for better app experience.'}
@@ -298,7 +354,6 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="flex space-x-3 relative z-10">
               <button
                 onClick={handleUpdateClick}
@@ -316,13 +371,11 @@ export default function HomePage() {
               </button>
             </div>
 
-            {/* Progress Bar Animation */}
             <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-200">
               <div className="h-full bg-gradient-to-r from-blue-500 to-cyan-500 animate-pulse"></div>
             </div>
           </div>
 
-          {/* Floating notification badge */}
           <div className="absolute -top-2 -right-2">
             <div className="bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold animate-bounce">
               !
@@ -331,7 +384,7 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Hero Slider Section */}
+      {/* Hero Slider Section - Original Colors Without Blue Gradient */}
       <section className="px-4 sm:px-6 lg:px-8 pb-6 sm:pb-8 pt-4">
         <div className="max-w-7xl mx-auto">
           <div className="relative h-48 sm:h-64 lg:h-80 xl:h-96 rounded-2xl sm:rounded-3xl overflow-hidden shadow-xl sm:shadow-2xl group">
@@ -347,8 +400,8 @@ export default function HomePage() {
                     className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
                     onError={(e) => handleImageError(e, slide.title)}
                   />
-                  <div className={`absolute inset-0 bg-gradient-to-r ${slide.gradient} mix-blend-multiply`}></div>
-                  <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 lg:p-8 text-white">
+                  {/* Only bottom gradient for text readability - no blue overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 lg:p-8 text-white bg-gradient-to-t from-black/80 to-transparent">
                     <h2 className="text-xl sm:text-2xl lg:text-3xl xl:text-4xl font-bold mb-2 sm:mb-3 drop-shadow-2xl">{slide.title}</h2>
                     <p className="text-sm sm:text-base lg:text-lg xl:text-xl opacity-90 drop-shadow-lg">{slide.description}</p>
                   </div>
@@ -356,7 +409,6 @@ export default function HomePage() {
               ))}
             </div>
             
-            {/* Navigation Arrows */}
             <button 
               onClick={prevSlide}
               className="absolute left-2 sm:left-4 lg:left-6 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg sm:shadow-2xl transition-all hover:bg-white/30 hover:scale-110 border border-white/30"
@@ -371,7 +423,6 @@ export default function HomePage() {
               <ChevronRight size={16} className="text-white" />
             </button>
 
-            {/* Dots Indicator */}
             <div className="absolute bottom-3 sm:bottom-4 lg:bottom-6 left-1/2 -translate-x-1/2 flex space-x-2 sm:space-x-3">
               {slides.map((_, index) => (
                 <button
@@ -387,7 +438,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Professional Services Section - Below Hero */}
+      {/* Professional Services Section - Enhanced 3x3 Grid */}
       <section className="px-4 sm:px-6 lg:px-8 pb-8 sm:pb-12">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-6 sm:mb-8">
@@ -395,7 +446,7 @@ export default function HomePage() {
             <p className="text-gray-600 text-sm sm:text-base lg:text-lg">Connect with trusted professionals</p>
           </div>
           
-          <div className="grid grid-cols-3 sm:grid-cols-5 gap-3 sm:gap-4 lg:gap-6">
+          <div className="grid grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
             {professionalServices.map((service, index) => (
               <button
                 key={index}
@@ -403,7 +454,7 @@ export default function HomePage() {
                 className="group relative bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 border border-gray-100 overflow-hidden flex flex-col items-center"
               >
                 <div className={`absolute inset-0 bg-gradient-to-br ${service.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}></div>
-                <div className={`relative z-10 w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br ${service.gradient} rounded-xl sm:rounded-2xl flex items-center justify-center shadow-md mb-2 sm:mb-3 group-hover:scale-110 transition-transform duration-200`}>
+                <div className={`relative z-10 w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br ${service.gradient} rounded-xl sm:rounded-2xl flex items-center justify-center shadow-md mb-3 group-hover:scale-110 transition-transform duration-200`}>
                   {service.icon}
                 </div>
                 <h3 className="font-semibold text-gray-900 text-xs sm:text-sm group-hover:text-gray-800 transition-colors text-center leading-tight">
@@ -415,6 +466,49 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      // Popular Works Section - Only Name on Full Image Cards
+<section className="px-4 sm:px-6 lg:px-8 pb-8 sm:pb-12">
+  <div className="max-w-7xl mx-auto">
+    <div className="text-center mb-6 sm:mb-8">
+      <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2 sm:mb-3">🔥 Popular Works</h2>
+      <p className="text-gray-600 text-sm sm:text-base lg:text-lg">Explore our trending construction projects</p>
+    </div>
+    
+    <div className="grid grid-cols-3 gap-2 sm:gap-4 lg:gap-6">
+      {popularWorks.map((work) => (
+        <div
+          key={work.id}
+          className="group relative aspect-[3/4] bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-105 cursor-pointer border border-gray-100"
+        >
+          {/* Full Image Background Covering Entire Card */}
+          <div className="absolute inset-0">
+            <img 
+              src={work.image} 
+              alt={work.title}
+              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+              onError={(e) => handleImageError(e, work.title)}
+            />
+            
+            {/* Dark Overlay for Better Text Readability */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
+            
+            {/* Only Project Title Overlay */}
+            <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5 text-white">
+              <h3 className="font-bold text-lg sm:text-xl text-center leading-tight line-clamp-2 drop-shadow-lg">
+                {work.title}
+              </h3>
+            </div>
+
+            {/* Hover Effect - Shine Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
 
       {/* Best Deals Section */}
       <section className="px-4 sm:px-6 lg:px-8 pb-16">
@@ -454,7 +548,6 @@ export default function HomePage() {
                         className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500 p-2"
                         onError={(e) => handleImageError(e, deal.name)}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
                     </div>
                     
                     <h3 className="font-bold text-gray-900 text-base sm:text-lg mb-2 text-center">{deal.name}</h3>

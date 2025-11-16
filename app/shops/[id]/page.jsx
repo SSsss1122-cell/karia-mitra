@@ -1,35 +1,48 @@
-import React from 'react';
-import { supabase } from '../../lib/supabase';
+import React from "react";
+import { supabase } from "../../lib/supabase";
 
 // ✅ Required for "output: export"
 export async function generateStaticParams() {
   try {
-    const { data } = await supabase.from('shops').select('id').limit(10);
-    return data?.map((shop) => ({ id: String(shop.id) })) || [{ id: '1' }];
+    const { data } = await supabase.from("shops").select("id").limit(10);
+    return data?.map((shop) => ({ id: String(shop.id) })) || [{ id: "1" }];
   } catch (err) {
-    console.error('Error fetching shop IDs:', err);
-    return [{ id: '1' }];
+    console.error("Error fetching shop IDs:", err);
+    return [{ id: "1" }];
   }
 }
 
-// ✅ Server Component for Static Generation
+// ✅ Server Component for Static Generation (fixed async params)
 export default async function ShopDetailsPage({ params }) {
-  const { id } = params;
+  // ⛔ Old: const { id } = params;
+  // ✅ New for Next.js 15/16:
+  const { id } = await params;
 
-  const { data: shop } = await supabase
-    .from('shops')
-    .select('*')
-    .eq('id', id)
+  // ✅ Fetch shop details
+  const { data: shop, error: shopError } = await supabase
+    .from("shops")
+    .select("*")
+    .eq("id", id)
     .single();
+
+  if (shopError) {
+    console.error("Error fetching shop:", shopError.message);
+    return <div className="p-10 text-center text-red-600">Error loading shop.</div>;
+  }
 
   if (!shop) {
     return <div className="p-10 text-center">Shop not found</div>;
   }
 
-  const { data: items } = await supabase
-    .from('items')
-    .select('*')
-    .eq('shop_id', id);
+  // ✅ Fetch items for that shop
+  const { data: items, error: itemError } = await supabase
+    .from("items")
+    .select("*")
+    .eq("shop_id", id);
+
+  if (itemError) {
+    console.error("Error fetching items:", itemError.message);
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -38,7 +51,7 @@ export default async function ShopDetailsPage({ params }) {
         <img
           src={
             shop.banner_url ||
-            'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200&h=400&fit=crop'
+            "https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200&h=400&fit=crop"
           }
           alt="Shop Banner"
           className="w-full h-full object-cover"
@@ -48,7 +61,7 @@ export default async function ShopDetailsPage({ params }) {
           <img
             src={
               shop.logo_url ||
-              'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'
+              "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
             }
             alt="Shop Logo"
             className="w-28 h-28 sm:w-32 sm:h-32 object-cover rounded-full border-4 border-white shadow-lg"
@@ -85,7 +98,7 @@ export default async function ShopDetailsPage({ params }) {
                 <img
                   src={
                     item.image_url ||
-                    'https://via.placeholder.com/400x300?text=No+Image'
+                    "https://via.placeholder.com/400x300?text=No+Image"
                   }
                   alt={item.name}
                   className="w-full h-48 object-cover"
